@@ -1,0 +1,16 @@
+CREATE INDEX idx_cinema_admin          ON cinema(admin_cinema_id);
+CREATE INDEX idx_cinema_wallet_cinema  ON cinema_wallet(cinema_id);
+CREATE INDEX idx_wallet_tx_wallet      ON wallet_transaction(cinema_wallet_id);
+CREATE INDEX idx_wallet_tx_date        ON wallet_transaction(transaction_date);
+CREATE INDEX idx_op_cost_cinema        ON operating_cost(cinema_id);
+CREATE INDEX idx_op_cost_date          ON operating_cost(effective_from);
+CREATE INDEX idx_ad_block_cinema       ON ad_block(cinema_id);
+CREATE INDEX idx_ad_block_dates        ON ad_block(start_date, end_date);
+CREATE INDEX idx_theater_cinema        ON theater(cinema_id);
+CREATE INDEX idx_theater_visible       ON theater(is_visible);
+CREATE INDEX idx_showtime_theater      ON showtime(theater_id);
+CREATE INDEX idx_showtime_movie        ON showtime(movie_id);
+CREATE INDEX idx_showtime_date         ON showtime(date_showtime);
+CREATE INDEX idx_room_comment_theater  ON room_comment(theater_id);
+CREATE INDEX idx_room_comment_date     ON room_comment(created_at);
+CREATE INDEX idx_room_rating_theater   ON room_rating(theater_id);
