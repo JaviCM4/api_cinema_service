@@ -2,6 +2,7 @@ package com.example.cinema.exceptionhandler;
 
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.exceptions.RestrictedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +33,12 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public String handleConflict(ConflictException ex) {
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler(RestrictedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleRestricted(RestrictedException ex) {
         return ex.getMessage();
     }
 
