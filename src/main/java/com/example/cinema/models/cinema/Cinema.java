@@ -1,0 +1,55 @@
+package com.example.cinema.models.cinema;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "cinema")
+@Data
+@NoArgsConstructor
+public class Cinema {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
+
+    @Column(name = "admin_cinema_id", nullable = false)
+    private UUID adminCinemaId;
+
+    @Column(name = "country_id", nullable = false)
+    private UUID countryId;
+
+    @Column(name = "name", nullable = false, length = 255)
+    private String name;
+
+    @Column(name = "address", length = 500)
+    private String address;
+
+    @Column(name = "phone", length = 20)
+    private String phone;
+
+    @Column(name = "email", length = 255)
+    private String email;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+}
