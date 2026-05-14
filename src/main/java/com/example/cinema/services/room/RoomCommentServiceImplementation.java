@@ -32,7 +32,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CommentResponse createComment(UUID theaterId, CreateCommentRequest dto)
+    public void createComment(UUID theaterId, CreateCommentRequest dto)
             throws ResourceNotFoundException, RestrictedException {
         Theater theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + theaterId));
@@ -43,18 +43,18 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
 
         RoomComment comment = dto.createEntity();
         comment.setTheater(theater);
-        return CommentResponse.from(commentRepository.save(comment));
+        commentRepository.save(comment);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CommentResponse updateComment(UUID commentId, UpdateCommentRequest dto)
+    public void updateComment(UUID commentId, UpdateCommentRequest dto)
             throws ResourceNotFoundException {
         RoomComment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
 
         comment.setContent(dto.getContent());
-        return CommentResponse.from(commentRepository.save(comment));
+        commentRepository.save(comment);
     }
 
     @Override

@@ -26,15 +26,14 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
     private final TheaterRepository theaterRepository;
 
     @Autowired
-    public RoomRatingServiceImplementation(RoomRatingRepository ratingRepository,
-                                           TheaterRepository theaterRepository) {
+    public RoomRatingServiceImplementation(RoomRatingRepository ratingRepository, TheaterRepository theaterRepository) {
         this.ratingRepository = ratingRepository;
         this.theaterRepository = theaterRepository;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RatingSummaryResponse createRating(UUID theaterId, CreateRatingRequest dto)
+    public void createRating(UUID theaterId, CreateRatingRequest dto)
             throws ResourceNotFoundException, RestrictedException, ConflictException {
         Theater theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + theaterId));
@@ -50,21 +49,17 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
         RoomRating rating = dto.createEntity();
         rating.setTheater(theater);
         ratingRepository.save(rating);
-
-        return buildSummary(theaterId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RatingSummaryResponse updateRating(UUID ratingId, UpdateRatingRequest dto)
+    public void updateRating(UUID ratingId, UpdateRatingRequest dto)
             throws ResourceNotFoundException {
         RoomRating rating = ratingRepository.findById(ratingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rating not found with id: " + ratingId));
 
         rating.setScore(dto.getScore());
         ratingRepository.save(rating);
-
-        return buildSummary(rating.getTheater().getId());
     }
 
     @Override

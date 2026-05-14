@@ -11,10 +11,10 @@ import java.util.UUID;
 
 public interface RoomRatingService {
 
-    RatingSummaryResponse createRating(UUID theaterId, CreateRatingRequest dto)
+    void createRating(UUID theaterId, CreateRatingRequest dto)
             throws ResourceNotFoundException, RestrictedException, ConflictException;
 
-    RatingSummaryResponse updateRating(UUID ratingId, UpdateRatingRequest dto)
+    void updateRating(UUID ratingId, UpdateRatingRequest dto)
             throws ResourceNotFoundException;
 
     RatingSummaryResponse findRatingsByTheater(UUID theaterId) throws ResourceNotFoundException;

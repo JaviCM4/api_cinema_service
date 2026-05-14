@@ -33,19 +33,17 @@ public class RoomCommentController {
     }
 
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(
-            @PathVariable UUID theaterId,
-            @Valid @RequestBody CreateCommentRequest request)
+    public ResponseEntity<Void> createComment(@PathVariable UUID theaterId, @Valid @RequestBody CreateCommentRequest request)
             throws ResourceNotFoundException, RestrictedException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(commentService.createComment(theaterId, request));
+        commentService.createComment(theaterId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommentResponse> updateComment(
-            @PathVariable UUID commentId,
-            @Valid @RequestBody UpdateCommentRequest request)
+    public ResponseEntity<Void> updateComment(@PathVariable UUID commentId, @Valid @RequestBody UpdateCommentRequest request)
             throws ResourceNotFoundException {
-        return ResponseEntity.ok(commentService.updateComment(commentId, request));
+        commentService.updateComment(commentId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{commentId}")
