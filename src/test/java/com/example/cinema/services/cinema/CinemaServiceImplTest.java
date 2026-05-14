@@ -35,7 +35,7 @@ public class CinemaServiceImplTest {
     private static final UUID ADMIN_ID   = UUID.randomUUID();
     private static final UUID COUNTRY_ID = UUID.randomUUID();
 
-    @Mock private CinemaRepository       cinemaRepository;
+    @Mock private CinemaRepository cinemaRepository;
     @Mock private CinemaWalletRepository cinemaWalletRepository;
     @Mock private OperatingCostRepository operatingCostRepository;
 
@@ -60,7 +60,7 @@ public class CinemaServiceImplTest {
         when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
 
         // Act
-        CinemaResponse result = cinemaService.createCinema(request);
+        cinemaService.createCinema(request);
 
         // Assert
         assertAll(
@@ -71,9 +71,7 @@ public class CinemaServiceImplTest {
                 () -> assertEquals(savedCinema,                walletCaptor.getValue().getCinema()),
                 () -> assertEquals(new BigDecimal("500.00"),   costCaptor.getValue().getDailyCost()),
                 () -> assertEquals(effectiveFrom,              costCaptor.getValue().getEffectiveFrom()),
-                () -> assertEquals(savedCinema,                costCaptor.getValue().getCinema()),
-                () -> assertEquals(CINEMA_ID,                  result.getId()),
-                () -> assertEquals("Cinepolis Centro",         result.getName())
+                () -> assertEquals(savedCinema,                costCaptor.getValue().getCinema())
         );
     }
 
@@ -91,18 +89,15 @@ public class CinemaServiceImplTest {
         when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
 
         // Act
-        CinemaResponse result = cinemaService.createCinema(request);
+        cinemaService.createCinema(request);
 
         // Assert
         assertAll(
                 () -> verify(cinemaRepository).save(any(Cinema.class)),
                 () -> verify(cinemaWalletRepository).save(any(CinemaWallet.class)),
-                () -> verify(operatingCostRepository).save(any(OperatingCost.class)),
-                () -> assertEquals("Cinepolis Sur", result.getName())
+                () -> verify(operatingCostRepository).save(any(OperatingCost.class))
         );
     }
-
-    // ── updateCinema ───────────────────────────────────────────────────────
 
     @Test
     void testUpdateCinema() throws Exception {
@@ -112,13 +107,11 @@ public class CinemaServiceImplTest {
 
         ArgumentCaptor<Cinema> captor = ArgumentCaptor.forClass(Cinema.class);
         Cinema existing = buildCinema("Cinepolis Centro");
-        Cinema saved    = buildCinema("Cinepolis Norte");
 
         when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(existing));
-        when(cinemaRepository.save(any(Cinema.class))).thenReturn(saved);
 
         // Act
-        CinemaResponse result = cinemaService.updateCinema(CINEMA_ID, request);
+        cinemaService.updateCinema(CINEMA_ID, request);
 
         // Assert
         assertAll(
@@ -126,8 +119,7 @@ public class CinemaServiceImplTest {
                 () -> assertEquals("Cinepolis Norte",  captor.getValue().getName()),
                 () -> assertEquals("Av. Principal 5",  captor.getValue().getAddress()),
                 () -> assertEquals("+573009876543",    captor.getValue().getPhone()),
-                () -> assertEquals("norte@mail.com",   captor.getValue().getEmail()),
-                () -> assertEquals(CINEMA_ID,          result.getId())
+                () -> assertEquals("norte@mail.com",   captor.getValue().getEmail())
         );
     }
 

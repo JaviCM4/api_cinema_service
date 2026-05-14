@@ -34,13 +34,13 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class TheaterServiceImplTest {
 
-    private static final UUID THEATER_ID      = UUID.randomUUID();
-    private static final UUID CINEMA_ID       = UUID.randomUUID();
+    private static final UUID THEATER_ID = UUID.randomUUID();
+    private static final UUID CINEMA_ID = UUID.randomUUID();
     private static final UUID TYPE_THEATER_ID = UUID.randomUUID();
 
-    @Mock private TheaterRepository     theaterRepository;
-    @Mock private SeatRepository        seatRepository;
-    @Mock private CinemaRepository      cinemaRepository;
+    @Mock private TheaterRepository theaterRepository;
+    @Mock private SeatRepository seatRepository;
+    @Mock private CinemaRepository cinemaRepository;
     @Mock private TypeTheaterRepository typeTheaterRepository;
 
     @InjectMocks
@@ -50,7 +50,7 @@ public class TheaterServiceImplTest {
     void testCreateTheater() throws Exception {
         // Arrange
         CreateTheaterRequest request = new CreateTheaterRequest(CINEMA_ID, TYPE_THEATER_ID, "Sala 1", 5, 10);
-        Cinema cinema         = buildCinema();
+        Cinema cinema = buildCinema();
         TypeTheater typeTheater = buildTypeTheater("IMAX");
         Theater savedTheater  = buildTheater("Sala 1", cinema, typeTheater);
 

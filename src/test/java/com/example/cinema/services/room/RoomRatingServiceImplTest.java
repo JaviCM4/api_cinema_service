@@ -30,11 +30,11 @@ import static org.mockito.Mockito.*;
 public class RoomRatingServiceImplTest {
 
     private static final UUID THEATER_ID = UUID.randomUUID();
-    private static final UUID RATING_ID  = UUID.randomUUID();
-    private static final UUID USER_ID    = UUID.randomUUID();
+    private static final UUID RATING_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UUID.randomUUID();
 
     @Mock private RoomRatingRepository ratingRepository;
-    @Mock private TheaterRepository    theaterRepository;
+    @Mock private TheaterRepository theaterRepository;
 
     @InjectMocks
     private RoomRatingServiceImplementation ratingService;
@@ -43,28 +43,24 @@ public class RoomRatingServiceImplTest {
     void testCreateRating() throws Exception {
         // Arrange
         CreateRatingRequest request = new CreateRatingRequest(USER_ID, (short) 4);
-        Theater theater             = buildTheater(true);
-        RoomRating saved            = buildRating((short) 4);
+        Theater theater = buildTheater(true);
+        RoomRating saved = buildRating((short) 4);
 
         ArgumentCaptor<RoomRating> captor = ArgumentCaptor.forClass(RoomRating.class);
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(theater));
         when(ratingRepository.findByTheater_IdAndUserId(THEATER_ID, USER_ID)).thenReturn(Optional.empty());
         when(ratingRepository.save(any(RoomRating.class))).thenReturn(saved);
-        when(ratingRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(saved));
-        when(ratingRepository.findAverageScoreByTheater_Id(THEATER_ID)).thenReturn(4.0);
 
         // Act
-        RatingSummaryResponse result = ratingService.createRating(THEATER_ID, request);
+        ratingService.createRating(THEATER_ID, request);
 
         // Assert
         assertAll(
                 () -> verify(ratingRepository).save(captor.capture()),
-                () -> assertEquals(theater,  captor.getValue().getTheater()),
-                () -> assertEquals(USER_ID,  captor.getValue().getUserId()),
-                () -> assertEquals((short) 4, captor.getValue().getScore()),
-                () -> assertEquals(1,         result.getRatings().size()),
-                () -> assertEquals(4.0,       result.getAverageScore())
+                () -> assertEquals(theater,   captor.getValue().getTheater()),
+                () -> assertEquals(USER_ID,   captor.getValue().getUserId()),
+                () -> assertEquals((short) 4, captor.getValue().getScore())
         );
     }
 
@@ -117,17 +113,14 @@ public class RoomRatingServiceImplTest {
 
         when(ratingRepository.findById(RATING_ID)).thenReturn(Optional.of(existing));
         when(ratingRepository.save(any(RoomRating.class))).thenReturn(existing);
-        when(ratingRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(existing));
-        when(ratingRepository.findAverageScoreByTheater_Id(THEATER_ID)).thenReturn(5.0);
 
         // Act
-        RatingSummaryResponse result = ratingService.updateRating(RATING_ID, request);
+        ratingService.updateRating(RATING_ID, request);
 
         // Assert
         assertAll(
                 () -> verify(ratingRepository).save(captor.capture()),
-                () -> assertEquals((short) 5, captor.getValue().getScore()),
-                () -> assertEquals(5.0,       result.getAverageScore())
+                () -> assertEquals((short) 5, captor.getValue().getScore())
         );
     }
 

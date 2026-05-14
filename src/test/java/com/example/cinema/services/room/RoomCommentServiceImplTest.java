@@ -30,10 +30,10 @@ public class RoomCommentServiceImplTest {
 
     private static final UUID THEATER_ID = UUID.randomUUID();
     private static final UUID COMMENT_ID = UUID.randomUUID();
-    private static final UUID USER_ID    = UUID.randomUUID();
+    private static final UUID USER_ID = UUID.randomUUID();
 
     @Mock private RoomCommentRepository commentRepository;
-    @Mock private TheaterRepository     theaterRepository;
+    @Mock private TheaterRepository theaterRepository;
 
     @InjectMocks
     private RoomCommentServiceImplementation commentService;
@@ -51,7 +51,7 @@ public class RoomCommentServiceImplTest {
         when(commentRepository.save(any(RoomComment.class))).thenReturn(saved);
 
         // Act
-        CommentResponse result = commentService.createComment(THEATER_ID, request);
+        commentService.createComment(THEATER_ID, request);
 
         // Assert
         assertAll(
@@ -59,9 +59,7 @@ public class RoomCommentServiceImplTest {
                 () -> verify(commentRepository).save(captor.capture()),
                 () -> assertEquals(theater,          captor.getValue().getTheater()),
                 () -> assertEquals(USER_ID,          captor.getValue().getUserId()),
-                () -> assertEquals("Excelente sala", captor.getValue().getContent()),
-                () -> assertEquals(COMMENT_ID,       result.getId()),
-                () -> assertEquals("Excelente sala", result.getContent())
+                () -> assertEquals("Excelente sala", captor.getValue().getContent())
         );
     }
 
@@ -100,13 +98,12 @@ public class RoomCommentServiceImplTest {
         when(commentRepository.save(any(RoomComment.class))).thenReturn(existing);
 
         // Act
-        CommentResponse result = commentService.updateComment(COMMENT_ID, request);
+        commentService.updateComment(COMMENT_ID, request);
 
         // Assert
         assertAll(
                 () -> verify(commentRepository).save(captor.capture()),
-                () -> assertEquals("Contenido actualizado", captor.getValue().getContent()),
-                () -> assertEquals(COMMENT_ID,              result.getId())
+                () -> assertEquals("Contenido actualizado", captor.getValue().getContent())
         );
     }
 
@@ -191,8 +188,6 @@ public class RoomCommentServiceImplTest {
                 () -> commentService.findCommentsByTheater(THEATER_ID));
         verify(commentRepository, never()).findByTheater_IdOrderByCreatedAtDesc(any());
     }
-
-    // ── helpers ────────────────────────────────────────────────────────────
 
     private Theater buildTheater(boolean allowComments) {
         Theater theater = new Theater();
