@@ -11,10 +11,10 @@ import java.util.UUID;
 
 public interface RoomCommentService {
 
-    CommentResponse createComment(UUID theaterId, CreateCommentRequest dto)
+    void createComment(UUID theaterId, CreateCommentRequest dto)
             throws ResourceNotFoundException, RestrictedException;
 
-    CommentResponse updateComment(UUID commentId, UpdateCommentRequest dto)
+    void updateComment(UUID commentId, UpdateCommentRequest dto)
             throws ResourceNotFoundException;
 
     void deleteComment(UUID commentId) throws ResourceNotFoundException;

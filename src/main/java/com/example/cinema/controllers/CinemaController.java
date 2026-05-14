@@ -31,14 +31,15 @@ public class CinemaController {
     }
 
     @PostMapping
-    public ResponseEntity<CinemaResponse> createCinema(@Valid @RequestBody CreateCinemaRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(cinemaService.createCinema(request));
+    public ResponseEntity<Void> createCinema(@Valid @RequestBody CreateCinemaRequest request) {
+        cinemaService.createCinema(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("/{cinemaId}")
-    public ResponseEntity<CinemaResponse> updateCinema(
-            @PathVariable UUID cinemaId,
-            @Valid @RequestBody UpdateCinemaRequest request) throws ResourceNotFoundException {
-        return ResponseEntity.ok(cinemaService.updateCinema(cinemaId, request));
+    public ResponseEntity<Void> updateCinema(@PathVariable UUID cinemaId, @Valid @RequestBody UpdateCinemaRequest request)
+            throws ResourceNotFoundException {
+        cinemaService.updateCinema(cinemaId, request);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -38,7 +38,7 @@ public class CinemaServiceImplementation implements CinemaService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CinemaResponse createCinema(CreateCinemaRequest dto) {
+    public void createCinema(CreateCinemaRequest dto) {
         Cinema cinema = cinemaRepository.save(dto.createEntity());
 
         CinemaWallet wallet = new CinemaWallet();
@@ -51,13 +51,11 @@ public class CinemaServiceImplementation implements CinemaService {
         operatingCost.setDailyCost(new BigDecimal("500.00"));
         operatingCost.setEffectiveFrom(dto.getEffectiveFrom());
         operatingCostRepository.save(operatingCost);
-
-        return CinemaResponse.from(cinema);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CinemaResponse updateCinema(UUID cinemaId, UpdateCinemaRequest dto)
+    public void updateCinema(UUID cinemaId, UpdateCinemaRequest dto)
             throws ResourceNotFoundException {
         Cinema cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cinema not found with id: " + cinemaId));
@@ -67,7 +65,7 @@ public class CinemaServiceImplementation implements CinemaService {
         if (dto.getPhone() != null) cinema.setPhone(dto.getPhone().trim());
         if (dto.getEmail() != null) cinema.setEmail(dto.getEmail().trim().toLowerCase());
 
-        return CinemaResponse.from(cinemaRepository.save(cinema));
+        cinemaRepository.save(cinema);
     }
 
     @Override

@@ -26,23 +26,22 @@ public class TheaterController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createTheater(
-            @Valid @RequestBody CreateTheaterRequest request) throws ResourceNotFoundException, ConflictException {
+    public ResponseEntity<Void> createTheater(@Valid @RequestBody CreateTheaterRequest request)
+            throws ResourceNotFoundException, ConflictException {
         theaterService.createTheater(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("/{theaterId}")
-    public ResponseEntity<Void> updateTheater(
-            @PathVariable UUID theaterId,
-            @Valid @RequestBody UpdateTheaterRequest request) throws ResourceNotFoundException {
+    public ResponseEntity<Void> updateTheater(@PathVariable UUID theaterId, @Valid @RequestBody UpdateTheaterRequest request)
+            throws ResourceNotFoundException {
         theaterService.updateTheater(theaterId, request);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{theaterId}")
-    public ResponseEntity<TheaterResponse> getTheater(
-            @PathVariable UUID theaterId) throws ResourceNotFoundException {
+    public ResponseEntity<TheaterResponse> getTheater(@PathVariable UUID theaterId)
+            throws ResourceNotFoundException {
         return ResponseEntity.ok(theaterService.getTheater(theaterId));
     }
 }

@@ -33,18 +33,16 @@ public class RoomRatingController {
     }
 
     @PostMapping
-    public ResponseEntity<RatingSummaryResponse> createRating(
-            @PathVariable UUID theaterId,
-            @Valid @RequestBody CreateRatingRequest request)
+    public ResponseEntity<Void> createRating(@PathVariable UUID theaterId, @Valid @RequestBody CreateRatingRequest request)
             throws ResourceNotFoundException, RestrictedException, ConflictException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ratingService.createRating(theaterId, request));
+        ratingService.createRating(theaterId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("/{ratingId}")
-    public ResponseEntity<RatingSummaryResponse> updateRating(
-            @PathVariable UUID ratingId,
-            @Valid @RequestBody UpdateRatingRequest request)
+    public ResponseEntity<Void> updateRating(@PathVariable UUID ratingId, @Valid @RequestBody UpdateRatingRequest request)
             throws ResourceNotFoundException {
-        return ResponseEntity.ok(ratingService.updateRating(ratingId, request));
+        ratingService.updateRating(ratingId, request);
+        return ResponseEntity.noContent().build();
     }
 }
