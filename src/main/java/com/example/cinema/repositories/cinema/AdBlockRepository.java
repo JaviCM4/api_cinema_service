@@ -21,4 +21,5 @@ public interface AdBlockRepository extends JpaRepository<AdBlock, UUID> {
           AND a.startDate <= :date AND a.endDate >= :date
     """)
     List<AdBlock> findActiveByCinemaIdAndDate(@Param("cinemaId") UUID cinemaId, @Param("date") LocalDate date);
+
 }
