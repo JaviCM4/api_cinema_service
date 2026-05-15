@@ -14,26 +14,26 @@ import java.util.UUID;
 @Value
 public class CreateShowtimeRequest {
 
-    @NotNull(message = "theaterId is required")
+    @NotNull(message = "El id de la sala es requerido")
     UUID theaterId;
 
-    @NotNull(message = "movieId is required")
+    @NotNull(message = "El id de la película es requerido")
     UUID movieId;
 
-    @NotNull(message = "versionTypeId is required")
+    @NotNull(message = "El id del tipo de versión es requerido")
     UUID versionTypeId;
 
-    @NotNull(message = "dateShowtime is required")
-    @FutureOrPresent(message = "dateShowtime must be today or a future date")
+    @NotNull(message = "La fecha de la función es requerida")
+    @FutureOrPresent(message = "La fecha de la función debe ser hoy o una fecha futura")
     LocalDate dateShowtime;
 
-    @NotNull(message = "startShowtime is required")
+    @NotNull(message = "La hora de inicio es requerida")
     LocalTime startShowtime;
 
-    @NotNull(message = "endShowtime is required")
+    @NotNull(message = "La hora de fin es requerida")
     LocalTime endShowtime;
 
-    @jakarta.validation.constraints.AssertTrue(message = "endShowtime must be after startShowtime")
+    @jakarta.validation.constraints.AssertTrue(message = "La hora de fin debe ser posterior a la hora de inicio")
     public boolean isEndAfterStart() {
         if (startShowtime == null || endShowtime == null) return true;
         return endShowtime.isAfter(startShowtime);

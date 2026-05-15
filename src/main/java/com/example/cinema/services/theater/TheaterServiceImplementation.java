@@ -32,10 +32,7 @@ public class TheaterServiceImplementation implements TheaterService {
     private final TypeTheaterRepository typeTheaterRepository;
 
     @Autowired
-    public TheaterServiceImplementation(TheaterRepository theaterRepository,
-                                        SeatRepository seatRepository,
-                                        CinemaRepository cinemaRepository,
-                                        TypeTheaterRepository typeTheaterRepository) {
+    public TheaterServiceImplementation(TheaterRepository theaterRepository, SeatRepository seatRepository, CinemaRepository cinemaRepository, TypeTheaterRepository typeTheaterRepository) {
         this.theaterRepository = theaterRepository;
         this.seatRepository = seatRepository;
         this.cinemaRepository = cinemaRepository;
@@ -46,13 +43,13 @@ public class TheaterServiceImplementation implements TheaterService {
     @Transactional(rollbackFor = Exception.class)
     public void createTheater(CreateTheaterRequest dto) throws ResourceNotFoundException, ConflictException {
         Cinema cinema = cinemaRepository.findById(dto.getCinemaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cinema not found with id: " + dto.getCinemaId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cine no encontrado con id: " + dto.getCinemaId()));
 
         TypeTheater typeTheater = typeTheaterRepository.findById(dto.getTypeTheaterId())
-                .orElseThrow(() -> new ResourceNotFoundException("TypeTheater not found with id: " + dto.getTypeTheaterId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de sala no encontrado con id: " + dto.getTypeTheaterId()));
 
         if (theaterRepository.existsByCinema_IdAndNameIgnoreCase(dto.getCinemaId(), dto.getName())) {
-            throw new ConflictException("A theater with name '" + dto.getName() + "' already exists in this cinema");
+            throw new ConflictException("Ya existe una sala con el nombre '" + dto.getName() + "' en este cine");
         }
 
         Theater saved = theaterRepository.save(dto.createEntity(cinema, typeTheater));
@@ -65,11 +62,11 @@ public class TheaterServiceImplementation implements TheaterService {
     @Transactional(rollbackFor = Exception.class)
     public void updateTheater(UUID theaterId, UpdateTheaterRequest dto) throws ResourceNotFoundException {
         Theater theater = theaterRepository.findById(theaterId)
-                .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + theaterId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + theaterId));
 
         if (dto.getTypeTheaterId() != null) {
             TypeTheater typeTheater = typeTheaterRepository.findById(dto.getTypeTheaterId())
-                    .orElseThrow(() -> new ResourceNotFoundException("TypeTheater not found with id: " + dto.getTypeTheaterId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Tipo de sala no encontrado con id: " + dto.getTypeTheaterId()));
             theater.setTypeTheater(typeTheater);
         }
         if (dto.getName() != null) {
@@ -92,7 +89,7 @@ public class TheaterServiceImplementation implements TheaterService {
     @Transactional(readOnly = true)
     public TheaterResponse getTheater(UUID theaterId) throws ResourceNotFoundException {
         Theater theater = theaterRepository.findById(theaterId)
-                .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + theaterId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + theaterId));
 
         List<SeatResponse> seatResponses = seatRepository.findByTheater_Id(theaterId)
                 .stream().map(SeatResponse::from).toList();

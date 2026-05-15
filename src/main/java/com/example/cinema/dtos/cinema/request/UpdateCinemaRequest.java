@@ -12,7 +12,7 @@ public class UpdateCinemaRequest {
     @Size(max = 500)
     String address;
 
-    @Pattern(regexp = "^[+]?[0-9\\s\\-().]{7,20}$", message = "Invalid phone number format")
+    @Pattern(regexp = "^[+]?[0-9\\s\\-().]{7,20}$", message = "Formato de número de teléfono inválido")
     String phone;
 
     @Email

@@ -10,7 +10,7 @@ public class UpdateTheaterRequest {
 
     UUID typeTheaterId;
 
-    @Size(max = 255, message = "name must not exceed 255 characters")
+    @Size(max = 255, message = "El nombre no debe superar 255 caracteres")
     String name;
 
     Boolean isVisible;

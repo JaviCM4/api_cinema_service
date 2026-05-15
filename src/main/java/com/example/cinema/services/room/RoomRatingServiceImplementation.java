@@ -36,14 +36,14 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
     public void createRating(UUID theaterId, CreateRatingRequest dto)
             throws ResourceNotFoundException, RestrictedException, ConflictException {
         Theater theater = theaterRepository.findById(theaterId)
-                .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + theaterId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + theaterId));
 
         if (!theater.isAllowRatings()) {
-            throw new RestrictedException("Ratings are not allowed for this theater");
+            throw new RestrictedException("Las calificaciones no están permitidas en esta sala");
         }
 
         if (ratingRepository.findByTheater_IdAndUserId(theaterId, dto.getUserId()).isPresent()) {
-            throw new ConflictException("User already rated this theater");
+            throw new ConflictException("El usuario ya califico esta sala");
         }
 
         RoomRating rating = dto.createEntity();
@@ -56,7 +56,7 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
     public void updateRating(UUID ratingId, UpdateRatingRequest dto)
             throws ResourceNotFoundException {
         RoomRating rating = ratingRepository.findById(ratingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Rating not found with id: " + ratingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Calificación no encontrada con id: " + ratingId));
 
         rating.setScore(dto.getScore());
         ratingRepository.save(rating);
@@ -66,7 +66,7 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
     @Transactional(readOnly = true)
     public RatingSummaryResponse findRatingsByTheater(UUID theaterId) throws ResourceNotFoundException {
         if (!theaterRepository.existsById(theaterId)) {
-            throw new ResourceNotFoundException("Theater not found with id: " + theaterId);
+            throw new ResourceNotFoundException("Sala no encontrada con id: " + theaterId);
         }
         return buildSummary(theaterId);
     }

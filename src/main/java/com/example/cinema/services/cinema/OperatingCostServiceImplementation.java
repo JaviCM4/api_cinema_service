@@ -18,9 +18,7 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
     private final CinemaRepository cinemaRepository;
 
     @Autowired
-    public OperatingCostServiceImplementation(
-            OperatingCostRepository operatingCostRepository,
-            CinemaRepository cinemaRepository) {
+    public OperatingCostServiceImplementation(OperatingCostRepository operatingCostRepository, CinemaRepository cinemaRepository) {
         this.operatingCostRepository = operatingCostRepository;
         this.cinemaRepository = cinemaRepository;
     }
@@ -30,10 +28,10 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
     public void createOperatingCost(CreateOperatingCostRequest dto)
             throws ResourceNotFoundException, ConflictException {
         Cinema cinema = cinemaRepository.findById(dto.getCinemaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cinema not found with id: " + dto.getCinemaId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cine no encontrado con id: " + dto.getCinemaId()));
 
         if (operatingCostRepository.existsByCinema_IdAndEffectiveFrom(dto.getCinemaId(), dto.getEffectiveFrom())) {
-            throw new ConflictException("An operating cost already exists for this cinema on date: " + dto.getEffectiveFrom());
+            throw new ConflictException("Ya existe un costo operativo para este cine en la fecha: " + dto.getEffectiveFrom());
         }
 
         operatingCostRepository.save(dto.createEntity(cinema));

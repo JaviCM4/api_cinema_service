@@ -8,8 +8,8 @@ import lombok.Value;
 @Value
 public class UpdateRatingRequest {
 
-    @NotNull(message = "score is required")
-    @Min(value = 1, message = "score must be at least 1")
-    @Max(value = 5, message = "score must be at most 5")
+    @NotNull(message = "La puntuación es requerida")
+    @Min(value = 1, message = "La puntuación debe ser mínimo 1")
+    @Max(value = 5, message = "La puntuación debe ser máximo 5")
     Short score;
 }

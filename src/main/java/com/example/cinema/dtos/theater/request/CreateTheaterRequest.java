@@ -14,22 +14,22 @@ import java.util.UUID;
 @Value
 public class CreateTheaterRequest {
 
-    @NotNull(message = "cinemaId is required")
+    @NotNull(message = "El id del cine es requerido")
     UUID cinemaId;
 
-    @NotNull(message = "typeTheaterId is required")
+    @NotNull(message = "El id del tipo de sala es requerido")
     UUID typeTheaterId;
 
-    @NotBlank(message = "name is required")
-    @Size(max = 255, message = "name must not exceed 255 characters")
+    @NotBlank(message = "El nombre de la sala es requerido")
+    @Size(max = 255, message = "El nombre no debe superar 255 caracteres")
     String name;
 
-    @NotNull(message = "rows is required")
-    @Min(value = 1, message = "rows must be at least 1")
+    @NotNull(message = "El número de filas es requerido")
+    @Min(value = 1, message = "El número de filas debe ser al menos 1")
     Integer rows;
 
-    @NotNull(message = "cols is required")
-    @Min(value = 1, message = "cols must be at least 1")
+    @NotNull(message = "El número de columnas es requerido")
+    @Min(value = 1, message = "El número de columnas debe ser al menos 1")
     Integer cols;
 
     public Theater createEntity(Cinema cinema, TypeTheater typeTheater) {

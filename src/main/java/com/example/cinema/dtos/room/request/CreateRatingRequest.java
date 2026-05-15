@@ -11,12 +11,12 @@ import java.util.UUID;
 @Value
 public class CreateRatingRequest {
 
-    @NotNull(message = "userId is required")
+    @NotNull(message = "El id del usuario es requerido")
     UUID userId;
 
-    @NotNull(message = "score is required")
-    @Min(value = 1, message = "score must be at least 1")
-    @Max(value = 5, message = "score must be at most 5")
+    @NotNull(message = "La puntuación es requerida")
+    @Min(value = 1, message = "La puntuación debe ser mínimo 1")
+    @Max(value = 5, message = "La puntuación debe ser máximo 5")
     Short score;
 
     public RoomRating createEntity() {

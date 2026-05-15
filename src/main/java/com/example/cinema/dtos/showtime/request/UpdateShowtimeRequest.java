@@ -19,7 +19,7 @@ public class UpdateShowtimeRequest {
 
     LocalTime endShowtime;
 
-    @jakarta.validation.constraints.AssertTrue(message = "endShowtime must be after startShowtime")
+    @jakarta.validation.constraints.AssertTrue(message = "La hora de fin debe ser posterior a la hora de inicio")
     public boolean isEndAfterStart() {
         if (startShowtime == null || endShowtime == null) return true;
         return endShowtime.isAfter(startShowtime);

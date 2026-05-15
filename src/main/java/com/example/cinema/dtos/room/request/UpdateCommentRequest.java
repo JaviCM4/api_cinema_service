@@ -7,7 +7,7 @@ import lombok.Value;
 @Value
 public class UpdateCommentRequest {
 
-    @NotBlank(message = "content is required")
-    @Size(min = 1, max = 1000, message = "content must be between 1 and 1000 characters")
+    @NotBlank(message = "El comentario es requerido")
+    @Size(min = 1, max = 1000, message = "El contenido debe tener entre 1 y 1000 caracteres")
     String content;
 }

@@ -24,8 +24,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     private final TheaterRepository theaterRepository;
 
     @Autowired
-    public RoomCommentServiceImplementation(RoomCommentRepository commentRepository,
-                                            TheaterRepository theaterRepository) {
+    public RoomCommentServiceImplementation(RoomCommentRepository commentRepository, TheaterRepository theaterRepository) {
         this.commentRepository = commentRepository;
         this.theaterRepository = theaterRepository;
     }
@@ -35,10 +34,10 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     public void createComment(UUID theaterId, CreateCommentRequest dto)
             throws ResourceNotFoundException, RestrictedException {
         Theater theater = theaterRepository.findById(theaterId)
-                .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + theaterId));
+                .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + theaterId));
 
         if (!theater.isAllowComments()) {
-            throw new RestrictedException("Comments are not allowed for this theater");
+            throw new RestrictedException("Los comentarios no están permitidos en esta sala");
         }
 
         RoomComment comment = dto.createEntity();
@@ -51,7 +50,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     public void updateComment(UUID commentId, UpdateCommentRequest dto)
             throws ResourceNotFoundException {
         RoomComment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Comentario no encontrado con id: " + commentId));
 
         comment.setContent(dto.getContent());
         commentRepository.save(comment);
@@ -61,7 +60,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteComment(UUID commentId) throws ResourceNotFoundException {
         if (!commentRepository.existsById(commentId)) {
-            throw new ResourceNotFoundException("Comment not found with id: " + commentId);
+            throw new ResourceNotFoundException("Comentario no encontrado con id: " + commentId);
         }
         commentRepository.deleteById(commentId);
     }
@@ -70,7 +69,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     @Transactional(readOnly = true)
     public List<CommentResponse> findCommentsByTheater(UUID theaterId) throws ResourceNotFoundException {
         if (!theaterRepository.existsById(theaterId)) {
-            throw new ResourceNotFoundException("Theater not found with id: " + theaterId);
+            throw new ResourceNotFoundException("Sala no encontrada con id: " + theaterId);
         }
         return commentRepository.findByTheater_IdOrderByCreatedAtDesc(theaterId)
                 .stream()

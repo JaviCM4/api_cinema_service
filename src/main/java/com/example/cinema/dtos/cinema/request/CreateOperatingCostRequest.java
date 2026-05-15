@@ -14,15 +14,15 @@ import java.util.UUID;
 @Value
 public class CreateOperatingCostRequest {
 
-    @NotNull(message = "cinemaId is required")
+    @NotNull(message = "El id del cine es requerido")
     UUID cinemaId;
 
-    @NotNull(message = "dailyCost is required")
-    @DecimalMin(value = "0.01", message = "dailyCost must be greater than 0")
+    @NotNull(message = "El costo diario es requerido")
+    @DecimalMin(value = "0.01", message = "El costo diario debe ser mayor a 0")
     BigDecimal dailyCost;
 
-    @NotNull(message = "effectiveFrom is required")
-    @FutureOrPresent(message = "effectiveFrom must be today or a future date")
+    @NotNull(message = "La fecha de vigencia es requerida")
+    @FutureOrPresent(message = "La fecha de vigencia debe ser hoy o una fecha futura")
     LocalDate effectiveFrom;
 
     public OperatingCost createEntity(Cinema cinema) {

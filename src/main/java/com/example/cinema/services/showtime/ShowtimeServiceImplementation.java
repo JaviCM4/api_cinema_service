@@ -42,10 +42,10 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
     @Transactional(rollbackFor = Exception.class)
     public void createShowtime(CreateShowtimeRequest dto) throws ResourceNotFoundException {
         Theater theater = theaterRepository.findById(dto.getTheaterId())
-                .orElseThrow(() -> new ResourceNotFoundException("Theater not found with id: " + dto.getTheaterId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + dto.getTheaterId()));
 
         VersionType versionType = versionTypeRepository.findById(dto.getVersionTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("VersionType not found with id: " + dto.getVersionTypeId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de versión no encontrado con id: " + dto.getVersionTypeId()));
 
         showtimeRepository.save(dto.createEntity(theater, versionType));
     }
@@ -55,7 +55,7 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
     public void updateShowtime(UUID showtimeId, UpdateShowtimeRequest dto)
             throws ResourceNotFoundException, ConflictException {
         Showtime showtime = showtimeRepository.findById(showtimeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Showtime not found with id: " + showtimeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Función no encontrada con id: " + showtimeId));
 
         if (dto.getMovieId() != null)  showtime.setMovieId(dto.getMovieId());
         if (dto.getDateShowtime() != null) showtime.setDateShowtime(dto.getDateShowtime());
@@ -64,14 +64,14 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
 
         if (dto.getVersionTypeId() != null) {
             VersionType versionType = versionTypeRepository.findById(dto.getVersionTypeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("VersionType not found with id: " + dto.getVersionTypeId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Tipo de versión no encontrado con id: " + dto.getVersionTypeId()));
             showtime.setVersionType(versionType);
         }
 
         LocalTime start = showtime.getStartShowtime();
         LocalTime end = showtime.getEndShowtime();
         if (!end.isAfter(start)) {
-            throw new ConflictException("endShowtime must be after startShowtime");
+            throw new ConflictException("La hora de fin debe ser posterior a la hora de inicio");
         }
         showtimeRepository.save(showtime);
     }
@@ -95,7 +95,7 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
             LocalDateTime showtimeStart = LocalDateTime.of(showtime.getDateShowtime(), showtime.getStartShowtime());
             String alert = null;
             if (showtimeStart.isAfter(now) && !showtimeStart.isAfter(now.plusMinutes(ALERT_MINUTES_BEFORE))) {
-                alert = "¡The show is about to begin!";
+                alert = "¡La función está a punto de comenzar!";
             }
             result.add(ShowtimeResponse.from(showtime, alert));
         }

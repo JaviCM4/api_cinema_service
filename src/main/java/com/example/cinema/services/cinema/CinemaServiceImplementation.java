@@ -27,10 +27,7 @@ public class CinemaServiceImplementation implements CinemaService {
     private final OperatingCostRepository operatingCostRepository;
 
     @Autowired
-    public CinemaServiceImplementation(
-            CinemaRepository cinemaRepository,
-            CinemaWalletRepository cinemaWalletRepository,
-            OperatingCostRepository operatingCostRepository) {
+    public CinemaServiceImplementation(CinemaRepository cinemaRepository, CinemaWalletRepository cinemaWalletRepository, OperatingCostRepository operatingCostRepository) {
         this.cinemaRepository = cinemaRepository;
         this.cinemaWalletRepository = cinemaWalletRepository;
         this.operatingCostRepository = operatingCostRepository;
@@ -58,7 +55,7 @@ public class CinemaServiceImplementation implements CinemaService {
     public void updateCinema(UUID cinemaId, UpdateCinemaRequest dto)
             throws ResourceNotFoundException {
         Cinema cinema = cinemaRepository.findById(cinemaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cinema not found with id: " + cinemaId));
+                .orElseThrow(() -> new ResourceNotFoundException("Cine no encontrado con id: " + cinemaId));
 
         if (dto.getName() != null) cinema.setName(dto.getName().trim());
         if (dto.getAddress() != null) cinema.setAddress(dto.getAddress().trim());
