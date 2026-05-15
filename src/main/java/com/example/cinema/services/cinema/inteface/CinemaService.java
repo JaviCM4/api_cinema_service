@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface CinemaService {
 
-    void createCinema(CreateCinemaRequest dto);
+    void createCinema(CreateCinemaRequest dto) throws ResourceNotFoundException;
 
     void updateCinema(UUID cinemaId, UpdateCinemaRequest dto) throws ResourceNotFoundException;
 

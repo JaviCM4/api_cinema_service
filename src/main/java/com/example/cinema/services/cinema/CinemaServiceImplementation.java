@@ -6,9 +6,11 @@ import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
+import com.example.cinema.models.cinema.GlobalCost;
 import com.example.cinema.models.cinema.OperatingCost;
 import com.example.cinema.repositories.cinema.CinemaRepository;
 import com.example.cinema.repositories.cinema.CinemaWalletRepository;
+import com.example.cinema.repositories.cinema.GlobalCostRepository;
 import com.example.cinema.repositories.cinema.OperatingCostRepository;
 import com.example.cinema.services.cinema.inteface.CinemaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,17 +27,26 @@ public class CinemaServiceImplementation implements CinemaService {
     private final CinemaRepository cinemaRepository;
     private final CinemaWalletRepository cinemaWalletRepository;
     private final OperatingCostRepository operatingCostRepository;
+    private final GlobalCostRepository globalCostRepository;
 
     @Autowired
-    public CinemaServiceImplementation(CinemaRepository cinemaRepository, CinemaWalletRepository cinemaWalletRepository, OperatingCostRepository operatingCostRepository) {
+    public CinemaServiceImplementation(CinemaRepository cinemaRepository,
+                                       CinemaWalletRepository cinemaWalletRepository,
+                                       OperatingCostRepository operatingCostRepository,
+                                       GlobalCostRepository globalCostRepository) {
         this.cinemaRepository = cinemaRepository;
         this.cinemaWalletRepository = cinemaWalletRepository;
         this.operatingCostRepository = operatingCostRepository;
+        this.globalCostRepository = globalCostRepository;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createCinema(CreateCinemaRequest dto) {
+    public void createCinema(CreateCinemaRequest dto) throws ResourceNotFoundException {
+        GlobalCost globalCost = globalCostRepository.findFirstByOrderByEffectiveFromDesc()
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No hay un costo global registrado"));
+
         Cinema cinema = cinemaRepository.save(dto.createEntity());
 
         CinemaWallet wallet = new CinemaWallet();
@@ -45,7 +56,7 @@ public class CinemaServiceImplementation implements CinemaService {
 
         OperatingCost operatingCost = new OperatingCost();
         operatingCost.setCinema(cinema);
-        operatingCost.setDailyCost(new BigDecimal("500.00"));
+        operatingCost.setDailyCost(globalCost.getDailyCost());
         operatingCost.setEffectiveFrom(dto.getEffectiveFrom());
         operatingCostRepository.save(operatingCost);
     }
