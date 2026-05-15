@@ -16,4 +16,8 @@ public interface TheaterPricingRepository extends JpaRepository<TheaterPricing, 
 
     Optional<TheaterPricing> findFirstByTheater_IdAndTypeTheater_IdAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
             UUID theaterId, UUID typeTheaterId, LocalDate date);
+
+    boolean existsByTheaterId(UUID theaterId);
+
+    Optional<TheaterPricing> findTopByTheaterIdAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(UUID theaterId, LocalDate now);
 }
