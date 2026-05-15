@@ -6,9 +6,11 @@ import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
+import com.example.cinema.models.cinema.GlobalCost;
 import com.example.cinema.models.cinema.OperatingCost;
 import com.example.cinema.repositories.cinema.CinemaRepository;
 import com.example.cinema.repositories.cinema.CinemaWalletRepository;
+import com.example.cinema.repositories.cinema.GlobalCostRepository;
 import com.example.cinema.repositories.cinema.OperatingCostRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,12 +40,13 @@ public class CinemaServiceImplTest {
     @Mock private CinemaRepository cinemaRepository;
     @Mock private CinemaWalletRepository cinemaWalletRepository;
     @Mock private OperatingCostRepository operatingCostRepository;
+    @Mock private GlobalCostRepository globalCostRepository;
 
     @InjectMocks
     private CinemaServiceImplementation cinemaService;
 
     @Test
-    void testCreateCinema() {
+    void testCreateCinema() throws Exception {
         // Arrange
         LocalDate effectiveFrom = LocalDate.now();
         CreateCinemaRequest request = new CreateCinemaRequest(
@@ -56,6 +59,8 @@ public class CinemaServiceImplTest {
         ArgumentCaptor<OperatingCost> costCaptor   = ArgumentCaptor.forClass(OperatingCost.class);
 
         when(cinemaRepository.save(any(Cinema.class))).thenReturn(savedCinema);
+        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
+                .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("500.00"))));
         when(cinemaWalletRepository.save(any(CinemaWallet.class))).thenReturn(new CinemaWallet());
         when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
 
@@ -76,7 +81,7 @@ public class CinemaServiceImplTest {
     }
 
     @Test
-    void testCreateCinemaWithOptionalFieldsNull() {
+    void testCreateCinemaWithOptionalFieldsNull() throws Exception {
         // Arrange
         LocalDate effectiveFrom = LocalDate.now().minusDays(10);
         CreateCinemaRequest request = new CreateCinemaRequest(
@@ -85,6 +90,8 @@ public class CinemaServiceImplTest {
         Cinema savedCinema = buildCinema("Cinepolis Sur");
 
         when(cinemaRepository.save(any(Cinema.class))).thenReturn(savedCinema);
+        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
+                .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("350.00"))));
         when(cinemaWalletRepository.save(any(CinemaWallet.class))).thenReturn(new CinemaWallet());
         when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
 
@@ -97,6 +104,21 @@ public class CinemaServiceImplTest {
                 () -> verify(cinemaWalletRepository).save(any(CinemaWallet.class)),
                 () -> verify(operatingCostRepository).save(any(OperatingCost.class))
         );
+    }
+
+    @Test
+    void testCreateCinemaNoGlobalCost() {
+        // Arrange
+        LocalDate effectiveFrom = LocalDate.now();
+        CreateCinemaRequest request = new CreateCinemaRequest(
+                ADMIN_ID, COUNTRY_ID, "Cinepolis Sur", null, null, null, effectiveFrom);
+
+        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc()).thenReturn(Optional.empty());
+
+        // Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> cinemaService.createCinema(request));
+        verify(cinemaRepository, never()).save(any());
     }
 
     @Test
@@ -204,5 +226,13 @@ public class CinemaServiceImplTest {
         c.setCreatedAt(LocalDateTime.now());
         c.setUpdatedAt(LocalDateTime.now());
         return c;
+    }
+
+    private GlobalCost buildGlobalCost(BigDecimal dailyCost) {
+        GlobalCost gc = new GlobalCost();
+        gc.setId(UUID.randomUUID());
+        gc.setDailyCost(dailyCost);
+        gc.setEffectiveFrom(LocalDate.now());
+        return gc;
     }
 }
