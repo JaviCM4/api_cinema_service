@@ -31,7 +31,8 @@ public class CinemaController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createCinema(@Valid @RequestBody CreateCinemaRequest request) {
+    public ResponseEntity<Void> createCinema(@Valid @RequestBody CreateCinemaRequest request)
+            throws ResourceNotFoundException {
         cinemaService.createCinema(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
