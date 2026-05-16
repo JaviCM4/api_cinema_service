@@ -5,6 +5,7 @@ import com.example.cinema.dtos.adblock.AdBlockRequest;
 import com.example.cinema.dtos.adblock.AdBlockResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.cinema.*;
 import com.example.cinema.repositories.cinema.*;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ public class AdBlockServiceImplTest {
     @Mock private CinemaRepository cinemaRepository;
     @Mock private CinemaWalletRepository walletRepository;
     @Mock private WalletTransactionRepository walletTransactionRepository;
+    @Mock private CinemaEventProducer eventProducer;
 
     @InjectMocks
     private AdBlockServiceImpl service;
@@ -87,6 +89,7 @@ public class AdBlockServiceImplTest {
         assertNotNull(response);
         assertEquals(DAYS_BLOCKED, response.getDaysBlocked());
         assertEquals(AMOUNT_TO_PAY, response.getAmountPaid());
+        verify(eventProducer).publishAdBlockCreated(any());
     }
 
     @Test

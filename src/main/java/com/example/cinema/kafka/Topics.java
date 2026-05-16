@@ -12,4 +12,8 @@ public final class Topics {
 
     public static final String SHOWTIME_CREATED     = "cinema.showtime.created";
     public static final String SHOWTIME_UPDATED     = "cinema.showtime.updated";
+
+    public static final String AD_BLOCK_CREATED     = "cinema.ad-block.created";
+
+    public static final String OPERATING_COST_CREATED = "cinema.operating-cost.created";
 }
