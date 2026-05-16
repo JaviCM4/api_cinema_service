@@ -1,7 +1,9 @@
 package com.example.cinema.kafka;
 
 
+import com.example.cinema.events.adblock.AdBlockCreatedEvent;
 import com.example.cinema.events.comments.*;
+import com.example.cinema.events.operatingcost.OperatingCostCreatedEvent;
 import com.example.cinema.events.ratings.*;
 import com.example.cinema.events.showtimes.*;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -45,6 +47,16 @@ public class CinemaEventProducer {
 
     public void publishFunctionUpdated(ShowtimeUpdatedEvent event) {
         kafkaTemplate.send(Topics.SHOWTIME_UPDATED, event);
+    }
+
+    //Eventos para bloqueos de anuncios
+    public void publishAdBlockCreated(AdBlockCreatedEvent event) {
+        kafkaTemplate.send(Topics.AD_BLOCK_CREATED, event);
+    }
+
+    //Eventos para costos operativos
+    public void publishOperatingCostCreated(OperatingCostCreatedEvent event) {
+        kafkaTemplate.send(Topics.OPERATING_COST_CREATED, event);
     }
 
 }

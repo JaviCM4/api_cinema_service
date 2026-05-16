@@ -3,8 +3,10 @@ package com.example.cinema.services.adblock;
 import com.example.cinema.dtos.adblock.AdBlockNowResponse;
 import com.example.cinema.dtos.adblock.AdBlockRequest;
 import com.example.cinema.dtos.adblock.AdBlockResponse;
+import com.example.cinema.events.adblock.AdBlockCreatedEvent;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.cinema.*;
 import com.example.cinema.models.enums.WalletTxType;
 import com.example.cinema.repositories.cinema.*;
@@ -23,13 +25,15 @@ public class AdBlockServiceImpl implements AdBlockService{
     private final CinemaRepository cinemaRepository;
     private final CinemaWalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final CinemaEventProducer eventProducer;
 
-    public AdBlockServiceImpl(AdBlockRepository adBlockRepository, AdBlockPricingRepository adBlockPricingRepository, CinemaRepository cinemaRepository, CinemaWalletRepository walletRepository, WalletTransactionRepository walletTransactionRepository) {
+    public AdBlockServiceImpl(AdBlockRepository adBlockRepository, AdBlockPricingRepository adBlockPricingRepository, CinemaRepository cinemaRepository, CinemaWalletRepository walletRepository, WalletTransactionRepository walletTransactionRepository, CinemaEventProducer eventProducer) {
         this.adBlockRepository = adBlockRepository;
         this.adBlockPricingRepository = adBlockPricingRepository;
         this.cinemaRepository = cinemaRepository;
         this.walletRepository = walletRepository;
         this.walletTransactionRepository = walletTransactionRepository;
+        this.eventProducer = eventProducer;
     }
 
     @Override
@@ -81,6 +85,10 @@ public class AdBlockServiceImpl implements AdBlockService{
         // Actualizar el balance del wallet
         wallet.setBalance(wallet.getBalance().subtract(amountToPay));
         walletRepository.save(wallet);
+
+        // Publicar evento de bloqueo de anuncios creado
+        AdBlockCreatedEvent event = AdBlockCreatedEvent.fromEntity(adBlockSaved);
+        eventProducer.publishAdBlockCreated(event);
 
         return AdBlockResponse.fromEntity(adBlockSaved);
     }

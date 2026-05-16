@@ -3,6 +3,7 @@ package com.example.cinema.services.cinema;
 import com.example.cinema.dtos.cinema.request.CreateOperatingCostRequest;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.OperatingCost;
 import com.example.cinema.repositories.cinema.CinemaRepository;
@@ -31,6 +32,7 @@ public class OperatingCostServiceImplTest {
 
     @Mock private OperatingCostRepository operatingCostRepository;
     @Mock private CinemaRepository  cinemaRepository;
+    @Mock private CinemaEventProducer eventProducer;
 
     @InjectMocks
     private OperatingCostServiceImplementation operatingCostService;
@@ -48,7 +50,7 @@ public class OperatingCostServiceImplTest {
         when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(cinema));
         when(operatingCostRepository.existsByCinema_IdAndEffectiveFrom(CINEMA_ID, effectiveFrom))
                 .thenReturn(false);
-        when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
+        when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(buildOperatingCost());
 
         // Act
         operatingCostService.createOperatingCost(request);
@@ -60,7 +62,8 @@ public class OperatingCostServiceImplTest {
                 () -> verify(operatingCostRepository).save(captor.capture()),
                 () -> assertEquals(cinema,                  captor.getValue().getCinema()),
                 () -> assertEquals(new BigDecimal("150.00"), captor.getValue().getDailyCost()),
-                () -> assertEquals(effectiveFrom,            captor.getValue().getEffectiveFrom())
+                () -> assertEquals(effectiveFrom,            captor.getValue().getEffectiveFrom()),
+                () -> verify(eventProducer).publishOperatingCostCreated(any())
         );
     }
 
@@ -102,5 +105,15 @@ public class OperatingCostServiceImplTest {
         cinema.setCreatedAt(LocalDateTime.now());
         cinema.setUpdatedAt(LocalDateTime.now());
         return cinema;
+    }
+
+    private OperatingCost buildOperatingCost() {
+        OperatingCost cost = new OperatingCost();
+        cost.setId(UUID.randomUUID());
+        cost.setCinema(buildCinema());
+        cost.setDailyCost(new BigDecimal("150.00"));
+        cost.setEffectiveFrom(LocalDate.now().plusDays(1));
+        cost.setCreatedAt(LocalDateTime.now());
+        return cost;
     }
 }

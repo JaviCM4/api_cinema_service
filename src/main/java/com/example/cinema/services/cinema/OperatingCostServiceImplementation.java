@@ -1,9 +1,12 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateOperatingCostRequest;
+import com.example.cinema.events.operatingcost.OperatingCostCreatedEvent;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.cinema.Cinema;
+import com.example.cinema.models.cinema.OperatingCost;
 import com.example.cinema.repositories.cinema.CinemaRepository;
 import com.example.cinema.repositories.cinema.OperatingCostRepository;
 import com.example.cinema.services.cinema.inteface.OperatingCostService;
@@ -16,11 +19,13 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
 
     private final OperatingCostRepository operatingCostRepository;
     private final CinemaRepository cinemaRepository;
+    private final CinemaEventProducer eventProducer;
 
     @Autowired
-    public OperatingCostServiceImplementation(OperatingCostRepository operatingCostRepository, CinemaRepository cinemaRepository) {
+    public OperatingCostServiceImplementation(OperatingCostRepository operatingCostRepository, CinemaRepository cinemaRepository, CinemaEventProducer eventProducer) {
         this.operatingCostRepository = operatingCostRepository;
         this.cinemaRepository = cinemaRepository;
+        this.eventProducer = eventProducer;
     }
 
     @Override
@@ -34,6 +39,11 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
             throw new ConflictException("Ya existe un costo operativo para este cine en la fecha: " + dto.getEffectiveFrom());
         }
 
-        operatingCostRepository.save(dto.createEntity(cinema));
+        OperatingCost savedOperatingCost = operatingCostRepository.save(dto.createEntity(cinema));
+
+        // Publicar evento de creacion de costo operativo
+        OperatingCostCreatedEvent event = OperatingCostCreatedEvent.fromEntity(savedOperatingCost);
+        eventProducer.publishOperatingCostCreated(event);
+
     }
 }
