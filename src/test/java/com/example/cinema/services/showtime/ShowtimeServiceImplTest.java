@@ -5,6 +5,8 @@ import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
 import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.kafka.CinemaEventProducer;
+import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.showtime.Showtime;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.models.theater.VersionType;
@@ -40,6 +42,7 @@ public class ShowtimeServiceImplTest {
     @Mock private ShowtimeRepository showtimeRepository;
     @Mock private TheaterRepository theaterRepository;
     @Mock private VersionTypeRepository versionTypeRepository;
+    @Mock private CinemaEventProducer eventProducer;
 
     @InjectMocks
     private ShowtimeServiceImplementation showtimeService;
@@ -73,7 +76,8 @@ public class ShowtimeServiceImplTest {
                 () -> assertEquals(versionType,  captor.getValue().getVersionType()),
                 () -> assertEquals(date,         captor.getValue().getDateShowtime()),
                 () -> assertEquals(start,        captor.getValue().getStartShowtime()),
-                () -> assertEquals(end,          captor.getValue().getEndShowtime())
+                () -> assertEquals(end,          captor.getValue().getEndShowtime()),
+                () -> verify(eventProducer).publishFunctionCreated(any())
         );
     }
 
@@ -138,7 +142,8 @@ public class ShowtimeServiceImplTest {
                 () -> assertEquals(newDate,    captor.getValue().getDateShowtime()),
                 () -> assertEquals(newStart,   captor.getValue().getStartShowtime()),
                 () -> assertEquals(newEnd,     captor.getValue().getEndShowtime()),
-                () -> assertEquals(newVType,   captor.getValue().getVersionType())
+                () -> assertEquals(newVType,   captor.getValue().getVersionType()),
+                () -> verify(eventProducer).publishFunctionUpdated(any())
         );
     }
 
@@ -304,7 +309,15 @@ public class ShowtimeServiceImplTest {
         Theater t = new Theater();
         t.setId(THEATER_ID);
         t.setName("Sala 1");
+        t.setCinema(buildCinema());
         return t;
+    }
+
+    private Cinema buildCinema() {
+        Cinema c = new Cinema();
+        c.setId(UUID.randomUUID());
+        c.setName("Cinepolis");
+        return c;
     }
 
     private VersionType buildVersionType(String name) {

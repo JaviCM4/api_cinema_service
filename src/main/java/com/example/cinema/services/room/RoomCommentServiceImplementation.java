@@ -3,8 +3,12 @@ package com.example.cinema.services.room;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.events.comments.RoomCommentCreatedEvent;
+import com.example.cinema.events.comments.RoomCommentDeleteEvent;
+import com.example.cinema.events.comments.RoomCommentUpdateEvent;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.room.RoomComment;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.repositories.room.RoomCommentRepository;
@@ -22,11 +26,13 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
 
     private final RoomCommentRepository commentRepository;
     private final TheaterRepository theaterRepository;
+    private final CinemaEventProducer eventProducer;
 
     @Autowired
-    public RoomCommentServiceImplementation(RoomCommentRepository commentRepository, TheaterRepository theaterRepository) {
+    public RoomCommentServiceImplementation(RoomCommentRepository commentRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer) {
         this.commentRepository = commentRepository;
         this.theaterRepository = theaterRepository;
+        this.eventProducer = eventProducer;
     }
 
     @Override
@@ -42,7 +48,11 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
 
         RoomComment comment = dto.createEntity();
         comment.setTheater(theater);
+
         commentRepository.save(comment);
+        // Publicar evento de creacion de comentario
+        RoomCommentCreatedEvent event = RoomCommentCreatedEvent.fromEntity(comment);
+        eventProducer.publisRoomCommentCreated(event);
     }
 
     @Override
@@ -54,6 +64,10 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
 
         comment.setContent(dto.getContent());
         commentRepository.save(comment);
+
+        // Publicar evento de actualizacion de comentario
+        RoomCommentUpdateEvent event = RoomCommentUpdateEvent.fromEntity(comment.getId(), comment.getContent());
+        eventProducer.publishRoomCommentUpdated(event);
     }
 
     @Override
@@ -63,6 +77,10 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
             throw new ResourceNotFoundException("Comentario no encontrado con id: " + commentId);
         }
         commentRepository.deleteById(commentId);
+
+        // Publicar evento de eliminacion de comentario
+        RoomCommentDeleteEvent event = new RoomCommentDeleteEvent(commentId);
+        eventProducer.publishRoomCommentDeleted(event);
     }
 
     @Override

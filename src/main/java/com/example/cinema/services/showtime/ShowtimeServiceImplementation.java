@@ -3,8 +3,11 @@ package com.example.cinema.services.showtime;
 import com.example.cinema.dtos.showtime.request.CreateShowtimeRequest;
 import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
 import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
+import com.example.cinema.events.showtimes.ShowtimeCreatedEvent;
+import com.example.cinema.events.showtimes.ShowtimeUpdatedEvent;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.showtime.Showtime;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.models.theater.VersionType;
@@ -30,12 +33,14 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
     private final ShowtimeRepository showtimeRepository;
     private final TheaterRepository theaterRepository;
     private final VersionTypeRepository versionTypeRepository;
+    private final CinemaEventProducer eventProducer;
 
     @Autowired
-    public ShowtimeServiceImplementation(ShowtimeRepository showtimeRepository, TheaterRepository theaterRepository, VersionTypeRepository versionTypeRepository) {
+    public ShowtimeServiceImplementation(ShowtimeRepository showtimeRepository, TheaterRepository theaterRepository, VersionTypeRepository versionTypeRepository, CinemaEventProducer eventProducer) {
         this.showtimeRepository = showtimeRepository;
         this.theaterRepository = theaterRepository;
         this.versionTypeRepository = versionTypeRepository;
+        this.eventProducer = eventProducer;
     }
 
     @Override
@@ -47,7 +52,11 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
         VersionType versionType = versionTypeRepository.findById(dto.getVersionTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de versión no encontrado con id: " + dto.getVersionTypeId()));
 
-        showtimeRepository.save(dto.createEntity(theater, versionType));
+        Showtime createdShowtime = showtimeRepository.save(dto.createEntity(theater, versionType));
+
+        // Publicar evento de creacion de funcion
+        ShowtimeCreatedEvent event = ShowtimeCreatedEvent.fromEntity(createdShowtime);
+        eventProducer.publishFunctionCreated(event);
     }
 
     @Override
@@ -74,6 +83,10 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
             throw new ConflictException("La hora de fin debe ser posterior a la hora de inicio");
         }
         showtimeRepository.save(showtime);
+
+        // Publicar evento de actualizacion de funcion
+        ShowtimeUpdatedEvent event = ShowtimeUpdatedEvent.fromEntity(showtime);
+        eventProducer.publishFunctionUpdated(event);
     }
 
     @Override
