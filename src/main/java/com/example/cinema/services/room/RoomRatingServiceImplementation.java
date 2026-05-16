@@ -4,9 +4,12 @@ import com.example.cinema.dtos.room.request.CreateRatingRequest;
 import com.example.cinema.dtos.room.request.UpdateRatingRequest;
 import com.example.cinema.dtos.room.response.RatingResponse;
 import com.example.cinema.dtos.room.response.RatingSummaryResponse;
+import com.example.cinema.events.ratings.RoomRatingCreatedEvent;
+import com.example.cinema.events.ratings.RoomRatingUpdatedEvent;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
+import com.example.cinema.kafka.CinemaEventProducer;
 import com.example.cinema.models.room.RoomRating;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.repositories.room.RoomRatingRepository;
@@ -24,11 +27,13 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
 
     private final RoomRatingRepository ratingRepository;
     private final TheaterRepository theaterRepository;
+    private final CinemaEventProducer eventProducer;
 
     @Autowired
-    public RoomRatingServiceImplementation(RoomRatingRepository ratingRepository, TheaterRepository theaterRepository) {
+    public RoomRatingServiceImplementation(RoomRatingRepository ratingRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer) {
         this.ratingRepository = ratingRepository;
         this.theaterRepository = theaterRepository;
+        this.eventProducer = eventProducer;
     }
 
     @Override
@@ -49,6 +54,9 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
         RoomRating rating = dto.createEntity();
         rating.setTheater(theater);
         ratingRepository.save(rating);
+        // Publicar evento de creacion de calificación
+        RoomRatingCreatedEvent event = RoomRatingCreatedEvent.fromEntity(rating);
+        eventProducer.publishRoomRatingCreated(event);
     }
 
     @Override
@@ -60,6 +68,9 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
 
         rating.setScore(dto.getScore());
         ratingRepository.save(rating);
+        // Publicar evento de actualizacion de calificacion
+        RoomRatingUpdatedEvent event = RoomRatingUpdatedEvent.fromEntity(rating.getId(), rating.getScore());
+        eventProducer.publishRoomRatingUpdated(event);
     }
 
     @Override

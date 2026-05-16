@@ -5,6 +5,8 @@ import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
+import com.example.cinema.kafka.CinemaEventProducer;
+import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.room.RoomComment;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.repositories.room.RoomCommentRepository;
@@ -34,6 +36,7 @@ public class RoomCommentServiceImplTest {
 
     @Mock private RoomCommentRepository commentRepository;
     @Mock private TheaterRepository theaterRepository;
+    @Mock private CinemaEventProducer eventProducer;
 
     @InjectMocks
     private RoomCommentServiceImplementation commentService;
@@ -59,7 +62,8 @@ public class RoomCommentServiceImplTest {
                 () -> verify(commentRepository).save(captor.capture()),
                 () -> assertEquals(theater,          captor.getValue().getTheater()),
                 () -> assertEquals(USER_ID,          captor.getValue().getUserId()),
-                () -> assertEquals("Excelente sala", captor.getValue().getContent())
+                () -> assertEquals("Excelente sala", captor.getValue().getContent()),
+                () -> verify(eventProducer).publisRoomCommentCreated(any())
         );
     }
 
@@ -103,7 +107,8 @@ public class RoomCommentServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(commentRepository).save(captor.capture()),
-                () -> assertEquals("Contenido actualizado", captor.getValue().getContent())
+                () -> assertEquals("Contenido actualizado", captor.getValue().getContent()),
+                () -> verify(eventProducer).publishRoomCommentUpdated(any())
         );
     }
 
@@ -129,6 +134,7 @@ public class RoomCommentServiceImplTest {
 
         // Assert
         verify(commentRepository).deleteById(COMMENT_ID);
+        verify(eventProducer).publishRoomCommentDeleted(any());
     }
 
     @Test
@@ -194,7 +200,15 @@ public class RoomCommentServiceImplTest {
         theater.setId(THEATER_ID);
         theater.setName("Sala 1");
         theater.setAllowComments(allowComments);
+        theater.setCinema(buildCinema());
         return theater;
+    }
+
+    private Cinema buildCinema() {
+        Cinema cinema = new Cinema();
+        cinema.setId(UUID.randomUUID());
+        cinema.setName("Cinepolis");
+        return cinema;
     }
 
     private RoomComment buildComment(String content) {

@@ -6,6 +6,8 @@ import com.example.cinema.dtos.room.response.RatingSummaryResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
+import com.example.cinema.kafka.CinemaEventProducer;
+import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.room.RoomRating;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.repositories.room.RoomRatingRepository;
@@ -35,6 +37,7 @@ public class RoomRatingServiceImplTest {
 
     @Mock private RoomRatingRepository ratingRepository;
     @Mock private TheaterRepository theaterRepository;
+    @Mock private CinemaEventProducer eventProducer;
 
     @InjectMocks
     private RoomRatingServiceImplementation ratingService;
@@ -60,7 +63,8 @@ public class RoomRatingServiceImplTest {
                 () -> verify(ratingRepository).save(captor.capture()),
                 () -> assertEquals(theater,   captor.getValue().getTheater()),
                 () -> assertEquals(USER_ID,   captor.getValue().getUserId()),
-                () -> assertEquals((short) 4, captor.getValue().getScore())
+                () -> assertEquals((short) 4, captor.getValue().getScore()),
+                () -> verify(eventProducer).publishRoomRatingCreated(any())
         );
     }
 
@@ -120,7 +124,8 @@ public class RoomRatingServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(ratingRepository).save(captor.capture()),
-                () -> assertEquals((short) 5, captor.getValue().getScore())
+                () -> assertEquals((short) 5, captor.getValue().getScore()),
+                () -> verify(eventProducer).publishRoomRatingUpdated(any())
         );
     }
 
@@ -190,7 +195,15 @@ public class RoomRatingServiceImplTest {
         theater.setId(THEATER_ID);
         theater.setName("Sala 1");
         theater.setAllowRatings(allowRatings);
+        theater.setCinema(buildCinema());
         return theater;
+    }
+
+    private Cinema buildCinema() {
+        Cinema cinema = new Cinema();
+        cinema.setId(UUID.randomUUID());
+        cinema.setName("Cinepolis");
+        return cinema;
     }
 
     private RoomRating buildRating(short score) {
