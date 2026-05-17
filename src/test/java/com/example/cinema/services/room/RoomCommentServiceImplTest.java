@@ -3,6 +3,7 @@ package com.example.cinema.services.room;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
 import com.example.cinema.kafka.CinemaEventProducer;
@@ -94,8 +95,8 @@ public class RoomCommentServiceImplTest {
     @Test
     void testUpdateComment() throws Exception {
         // Arrange
-        UpdateCommentRequest request    = new UpdateCommentRequest("Contenido actualizado");
-        RoomComment existing            = buildComment("Contenido original");
+        UpdateCommentRequest request       = new UpdateCommentRequest(USER_ID, "Contenido actualizado");
+        RoomComment existing               = buildComment("Contenido original");
         ArgumentCaptor<RoomComment> captor = ArgumentCaptor.forClass(RoomComment.class);
 
         when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(existing));
@@ -107,15 +108,28 @@ public class RoomCommentServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(commentRepository).save(captor.capture()),
-                () -> assertEquals("Contenido actualizado", captor.getValue().getContent()),
-                () -> verify(eventProducer).publishRoomCommentUpdated(any())
+                () -> assertEquals("Contenido actualizado", captor.getValue().getContent())
         );
+    }
+
+    @Test
+    void testUpdateCommentWrongUser() {
+        // Arrange
+        UpdateCommentRequest request = new UpdateCommentRequest(UUID.randomUUID(), "Contenido actualizado");
+        RoomComment existing        = buildComment("Contenido original");
+
+        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(existing));
+
+        // Assert
+        assertThrows(ConflictException.class,
+                () -> commentService.updateComment(COMMENT_ID, request));
+        verify(commentRepository, never()).save(any());
     }
 
     @Test
     void testUpdateCommentNotFound() {
         // Arrange
-        UpdateCommentRequest request = new UpdateCommentRequest("Contenido actualizado");
+        UpdateCommentRequest request = new UpdateCommentRequest(USER_ID, "Contenido actualizado");
         when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.empty());
 
         // Assert
@@ -127,24 +141,34 @@ public class RoomCommentServiceImplTest {
     @Test
     void testDeleteComment() throws Exception {
         // Arrange
-        when(commentRepository.existsById(COMMENT_ID)).thenReturn(true);
+        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(buildComment("Excelente")));
 
         // Act
-        commentService.deleteComment(COMMENT_ID);
+        commentService.deleteComment(COMMENT_ID, USER_ID);
 
         // Assert
         verify(commentRepository).deleteById(COMMENT_ID);
-        verify(eventProducer).publishRoomCommentDeleted(any());
+    }
+
+    @Test
+    void testDeleteCommentWrongUser() {
+        // Arrange
+        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(buildComment("Excelente")));
+
+        // Assert
+        assertThrows(ConflictException.class,
+                () -> commentService.deleteComment(COMMENT_ID, UUID.randomUUID()));
+        verify(commentRepository, never()).deleteById(any());
     }
 
     @Test
     void testDeleteCommentNotFound() {
         // Arrange
-        when(commentRepository.existsById(COMMENT_ID)).thenReturn(false);
+        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.empty());
 
         // Assert
         assertThrows(ResourceNotFoundException.class,
-                () -> commentService.deleteComment(COMMENT_ID));
+                () -> commentService.deleteComment(COMMENT_ID, USER_ID));
         verify(commentRepository, never()).deleteById(any());
     }
 

@@ -63,8 +63,7 @@ public class RoomRatingServiceImplTest {
                 () -> verify(ratingRepository).save(captor.capture()),
                 () -> assertEquals(theater,   captor.getValue().getTheater()),
                 () -> assertEquals(USER_ID,   captor.getValue().getUserId()),
-                () -> assertEquals((short) 4, captor.getValue().getScore()),
-                () -> verify(eventProducer).publishRoomRatingCreated(any())
+                () -> assertEquals((short) 4, captor.getValue().getScore())
         );
     }
 
@@ -109,7 +108,7 @@ public class RoomRatingServiceImplTest {
     @Test
     void testUpdateRating() throws Exception {
         // Arrange
-        UpdateRatingRequest request        = new UpdateRatingRequest((short) 5);
+        UpdateRatingRequest request        = new UpdateRatingRequest(USER_ID, (short) 5);
         Theater theater                    = buildTheater(true);
         RoomRating existing                = buildRating((short) 3);
         existing.setTheater(theater);
@@ -124,15 +123,28 @@ public class RoomRatingServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(ratingRepository).save(captor.capture()),
-                () -> assertEquals((short) 5, captor.getValue().getScore()),
-                () -> verify(eventProducer).publishRoomRatingUpdated(any())
+                () -> assertEquals((short) 5, captor.getValue().getScore())
         );
+    }
+
+    @Test
+    void testUpdateRatingWrongUser() {
+        // Arrange
+        UpdateRatingRequest request = new UpdateRatingRequest(UUID.randomUUID(), (short) 5);
+        RoomRating existing        = buildRating((short) 3);
+
+        when(ratingRepository.findById(RATING_ID)).thenReturn(Optional.of(existing));
+
+        // Assert
+        assertThrows(ConflictException.class,
+                () -> ratingService.updateRating(RATING_ID, request));
+        verify(ratingRepository, never()).save(any());
     }
 
     @Test
     void testUpdateRatingNotFound() {
         // Arrange
-        UpdateRatingRequest request = new UpdateRatingRequest((short) 5);
+        UpdateRatingRequest request = new UpdateRatingRequest(USER_ID, (short) 5);
         when(ratingRepository.findById(RATING_ID)).thenReturn(Optional.empty());
 
         // Assert

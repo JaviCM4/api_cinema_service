@@ -68,13 +68,13 @@ public class GlobalCostServiceImplTest {
     // ─── getLatest ───────────────────────────────────────────────────────────
 
     @Test
-    void testGetLatest() throws Exception {
+    void testGetLatestGlobalCost() throws Exception {
         GlobalCost globalCost = buildGlobalCost(new BigDecimal("450.00"), LocalDate.now());
 
         when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
                 .thenReturn(Optional.of(globalCost));
 
-        GlobalCostResponse result = globalCostService.getLatest();
+        GlobalCostResponse result = globalCostService.getLatestGlobalCost();
 
         assertAll(
                 () -> assertEquals(new BigDecimal("450.00"),      result.getDailyCost()),
@@ -83,24 +83,24 @@ public class GlobalCostServiceImplTest {
     }
 
     @Test
-    void testGetLatestReturnsNewestByEffectiveFrom() throws Exception {
+    void testGetLatestGlobalCostReturnsNewestByEffectiveFrom() throws Exception {
         GlobalCost latest = buildGlobalCost(new BigDecimal("600.00"), LocalDate.now());
 
         when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
                 .thenReturn(Optional.of(latest));
 
-        GlobalCostResponse result = globalCostService.getLatest();
+        GlobalCostResponse result = globalCostService.getLatestGlobalCost();
 
         assertEquals(new BigDecimal("600.00"), result.getDailyCost());
     }
 
     @Test
-    void testGetLatestNoRecords() {
+    void testGetLatestGlobalCostNoRecords() {
         when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
                 .thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> globalCostService.getLatest());
+                () -> globalCostService.getLatestGlobalCost());
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
