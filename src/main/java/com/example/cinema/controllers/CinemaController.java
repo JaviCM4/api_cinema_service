@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
+import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.CinemaService;
 import jakarta.validation.Valid;
@@ -26,8 +27,14 @@ public class CinemaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CinemaResponse>> getAllCinemas() {
+    public ResponseEntity<List<CinemaSummaryResponse>> getAllCinemas() {
         return ResponseEntity.ok(cinemaService.findAll());
+    }
+
+    @GetMapping("/admin/{adminCinemaId}")
+    public ResponseEntity<CinemaResponse> getCinemaByAdmin(@PathVariable UUID adminCinemaId)
+            throws ResourceNotFoundException {
+        return ResponseEntity.ok(cinemaService.getByAdminCinemaId(adminCinemaId));
     }
 
     @PostMapping

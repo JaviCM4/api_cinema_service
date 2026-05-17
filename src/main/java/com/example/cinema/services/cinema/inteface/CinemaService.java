@@ -3,6 +3,7 @@ package com.example.cinema.services.cinema.inteface;
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
+import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 
 import java.util.List;
@@ -14,5 +15,7 @@ public interface CinemaService {
 
     void updateCinema(UUID cinemaId, UpdateCinemaRequest dto) throws ResourceNotFoundException;
 
-    List<CinemaResponse> findAll();
+    List<CinemaSummaryResponse> findAll();
+
+    CinemaResponse getByAdminCinemaId(UUID adminCinemaId) throws ResourceNotFoundException;
 }

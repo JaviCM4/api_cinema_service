@@ -41,9 +41,9 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
 
         OperatingCost savedOperatingCost = operatingCostRepository.save(dto.createEntity(cinema));
 
-        
+        // Publicar evento de creacion de costo operativo
         OperatingCostCreatedEvent event = OperatingCostCreatedEvent.fromEntity(savedOperatingCost);
         eventProducer.publishOperatingCostCreated(event);
-
+        
     }
 }

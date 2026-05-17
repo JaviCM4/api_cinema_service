@@ -25,8 +25,7 @@ public class GlobalCostServiceImplementation implements GlobalCostService {
     @Transactional(rollbackFor = Exception.class)
     public void createGlobalCost(CreateGlobalCostRequest dto) throws ConflictException {
         if (globalCostRepository.existsByEffectiveFrom(dto.getEffectiveFrom())) {
-            throw new ConflictException(
-                    "Ya existe un costo global para la fecha: " + dto.getEffectiveFrom());
+            throw new ConflictException("Ya existe un costo global para la fecha: " + dto.getEffectiveFrom());
         }
 
         GlobalCost cost = new GlobalCost();
@@ -40,7 +39,6 @@ public class GlobalCostServiceImplementation implements GlobalCostService {
     public GlobalCostResponse getLatest() throws ResourceNotFoundException {
         return globalCostRepository.findFirstByOrderByEffectiveFromDesc()
                 .map(GlobalCostResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No hay un costo global registrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("No hay un costo global registrado"));
     }
 }

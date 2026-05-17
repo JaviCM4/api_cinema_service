@@ -31,9 +31,8 @@ public class Showtime {
     @Column(name = "movie_id", nullable = false)
     private UUID movieId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "version_type", nullable = false)
-    @JsonIgnore
+    @Enumerated(EnumType.STRING)
+    @Column(name = "version_type", nullable = false, length = 50)
     private VersionType versionType;
 
     @Column(name = "date_showtime", nullable = false)

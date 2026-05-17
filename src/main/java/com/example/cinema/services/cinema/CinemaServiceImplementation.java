@@ -3,6 +3,7 @@ package com.example.cinema.services.cinema;
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
+import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
@@ -30,10 +31,7 @@ public class CinemaServiceImplementation implements CinemaService {
     private final GlobalCostRepository globalCostRepository;
 
     @Autowired
-    public CinemaServiceImplementation(CinemaRepository cinemaRepository,
-                                       CinemaWalletRepository cinemaWalletRepository,
-                                       OperatingCostRepository operatingCostRepository,
-                                       GlobalCostRepository globalCostRepository) {
+    public CinemaServiceImplementation(CinemaRepository cinemaRepository, CinemaWalletRepository cinemaWalletRepository, OperatingCostRepository operatingCostRepository, GlobalCostRepository globalCostRepository) {
         this.cinemaRepository = cinemaRepository;
         this.cinemaWalletRepository = cinemaWalletRepository;
         this.operatingCostRepository = operatingCostRepository;
@@ -44,8 +42,7 @@ public class CinemaServiceImplementation implements CinemaService {
     @Transactional(rollbackFor = Exception.class)
     public void createCinema(CreateCinemaRequest dto) throws ResourceNotFoundException {
         GlobalCost globalCost = globalCostRepository.findFirstByOrderByEffectiveFromDesc()
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No hay un costo global registrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("No hay un costo global registrado"));
 
         Cinema cinema = cinemaRepository.save(dto.createEntity());
 
@@ -78,11 +75,22 @@ public class CinemaServiceImplementation implements CinemaService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CinemaResponse> findAll() {
+    public List<CinemaSummaryResponse> findAll() {
         return cinemaRepository.findAll()
                 .stream()
-                .map(CinemaResponse::from)
+                .map(CinemaSummaryResponse::from)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CinemaResponse getByAdminCinemaId(UUID adminCinemaId) throws ResourceNotFoundException {
+        return cinemaRepository.findByAdminCinemaId(adminCinemaId)
+                .stream()
+                .findFirst()
+                .map(CinemaResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró un cine para el admin con id: " + adminCinemaId));
     }
 
 }
