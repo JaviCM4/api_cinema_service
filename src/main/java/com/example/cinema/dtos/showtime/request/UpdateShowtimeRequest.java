@@ -1,5 +1,6 @@
 package com.example.cinema.dtos.showtime.request;
 
+import com.example.cinema.models.showtime.Showtime;
 import com.example.cinema.models.theater.VersionType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -19,6 +20,7 @@ public class UpdateShowtimeRequest {
     @NotNull(message = "El tipo de versión es requerido")
     VersionType versionType;
 
+    @NotNull(message = "La fecha de la función es requerida")
     @FutureOrPresent(message = "La fecha de la función debe ser hoy o una fecha futura")
     LocalDate dateShowtime;
 
@@ -27,11 +29,5 @@ public class UpdateShowtimeRequest {
 
     @NotNull(message = "La hora de fin de la función es requerida")
     LocalTime endShowtime;
-
-    @AssertTrue(message = "La hora de fin debe ser posterior a la hora de inicio")
-    public boolean isEndAfterStart() {
-        if (startShowtime == null || endShowtime == null) return true;
-        return endShowtime.isAfter(startShowtime);
-    }
 
 }

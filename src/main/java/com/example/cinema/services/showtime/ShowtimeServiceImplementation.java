@@ -43,7 +43,8 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createShowtime(CreateShowtimeRequest dto) throws ResourceNotFoundException, ConflictException {
+    public void createShowtime(CreateShowtimeRequest dto)
+            throws ResourceNotFoundException, ConflictException {
         Theater theater = theaterRepository.findById(dto.getTheaterId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + dto.getTheaterId()));
 
@@ -66,7 +67,7 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Función no encontrada con id: " + showtimeId));
 
         showtime.setMovieId(dto.getMovieId());
-        if (dto.getDateShowtime() != null) showtime.setDateShowtime(dto.getDateShowtime());
+        showtime.setDateShowtime(dto.getDateShowtime());
         showtime.setStartShowtime(dto.getStartShowtime());
         showtime.setEndShowtime(dto.getEndShowtime());
         showtime.setVersionType(dto.getVersionType());
@@ -88,7 +89,7 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ShowtimeByTheaterResponse> findShowtimesByTheater(UUID theaterId) {
         List<Showtime> showtimes = showtimeRepository.findByTheater_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(theaterId);
         LocalDateTime now = LocalDateTime.now();

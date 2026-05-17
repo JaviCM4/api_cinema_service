@@ -15,7 +15,7 @@ public interface RoomRatingService {
             throws ResourceNotFoundException, RestrictedException, ConflictException;
 
     void updateRating(UUID ratingId, UpdateRatingRequest dto)
-            throws ResourceNotFoundException;
+            throws ResourceNotFoundException, ConflictException;
 
     RatingSummaryResponse findRatingsByTheater(UUID theaterId) throws ResourceNotFoundException;
 }

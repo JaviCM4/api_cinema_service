@@ -9,5 +9,5 @@ public interface GlobalCostService {
 
     void createGlobalCost(CreateGlobalCostRequest dto) throws ConflictException;
 
-    GlobalCostResponse getLatest() throws ResourceNotFoundException;
+    GlobalCostResponse getLatestGlobalCost() throws ResourceNotFoundException;
 }

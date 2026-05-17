@@ -7,6 +7,7 @@ import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.GlobalCostService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,14 +23,14 @@ public class GlobalCostController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createGlobalCost(
-            @Valid @RequestBody CreateGlobalCostRequest dto) throws ConflictException {
+    public ResponseEntity<Void> createGlobalCost(@Valid @RequestBody CreateGlobalCostRequest dto)
+            throws ConflictException {
         globalCostService.createGlobalCost(dto);
-        return ResponseEntity.status(201).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping
     public ResponseEntity<GlobalCostResponse> getLatest() throws ResourceNotFoundException {
-        return ResponseEntity.ok(globalCostService.getLatest());
+        return ResponseEntity.ok(globalCostService.getLatestGlobalCost());
     }
 }

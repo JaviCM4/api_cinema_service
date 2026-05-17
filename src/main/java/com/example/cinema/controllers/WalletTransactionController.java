@@ -6,6 +6,7 @@ import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.WalletTransactionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,17 +25,14 @@ public class WalletTransactionController {
     }
 
     @PostMapping("/{cinemaId}/recharge")
-    public ResponseEntity<Void> createRecharge(
-            @PathVariable UUID cinemaId,
-            @Valid @RequestBody CreateWalletTransactionRequest dto)
+    public ResponseEntity<Void> createRecharge(@PathVariable UUID cinemaId, @Valid @RequestBody CreateWalletTransactionRequest dto)
             throws ResourceNotFoundException {
         walletTransactionService.createRecharge(cinemaId, dto);
-        return ResponseEntity.status(201).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/{cinemaId}")
-    public ResponseEntity<List<WalletTransactionResponse>> findAll(
-            @PathVariable UUID cinemaId)
+    public ResponseEntity<List<WalletTransactionResponse>> findAll(@PathVariable UUID cinemaId)
             throws ResourceNotFoundException {
         return ResponseEntity.ok(walletTransactionService.findAll(cinemaId));
     }

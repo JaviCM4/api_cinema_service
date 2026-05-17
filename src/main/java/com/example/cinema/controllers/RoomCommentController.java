@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
 import com.example.cinema.services.room.inteface.RoomCommentService;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/v1/theaters/{theaterId}/comments")
 public class RoomCommentController {
 
     private final RoomCommentService commentService;
@@ -26,30 +26,31 @@ public class RoomCommentController {
         this.commentService = commentService;
     }
 
-    @GetMapping
+    @GetMapping("/v1/theaters/{theaterId}/comments")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable UUID theaterId)
             throws ResourceNotFoundException {
         return ResponseEntity.ok(commentService.findCommentsByTheater(theaterId));
     }
 
-    @PostMapping
+    @PostMapping("/v1/theaters/{theaterId}/comments")
     public ResponseEntity<Void> createComment(@PathVariable UUID theaterId, @Valid @RequestBody CreateCommentRequest request)
             throws ResourceNotFoundException, RestrictedException {
         commentService.createComment(theaterId, request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PatchMapping("/{commentId}")
+    @PatchMapping("/v1/comments/{commentId}")
     public ResponseEntity<Void> updateComment(@PathVariable UUID commentId, @Valid @RequestBody UpdateCommentRequest request)
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, ConflictException {
         commentService.updateComment(commentId, request);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId)
-            throws ResourceNotFoundException {
-        commentService.deleteComment(commentId);
+    @DeleteMapping("/v1/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId,
+                                              @RequestParam UUID userId)
+            throws ResourceNotFoundException, ConflictException {
+        commentService.deleteComment(commentId, userId);
         return ResponseEntity.noContent().build();
     }
 }

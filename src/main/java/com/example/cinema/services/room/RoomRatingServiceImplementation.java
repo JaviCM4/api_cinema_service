@@ -54,6 +54,7 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
         RoomRating rating = dto.createEntity();
         rating.setTheater(theater);
         ratingRepository.save(rating);
+
         // Publicar evento de creacion de calificación
         RoomRatingCreatedEvent event = RoomRatingCreatedEvent.fromEntity(rating);
         eventProducer.publishRoomRatingCreated(event);
@@ -62,12 +63,17 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateRating(UUID ratingId, UpdateRatingRequest dto)
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, ConflictException {
         RoomRating rating = ratingRepository.findById(ratingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Calificación no encontrada con id: " + ratingId));
 
+        if (!rating.getUserId().equals(dto.getUserId())) {
+            throw new ConflictException("No tiene permisos para actualizar esta calificación porque fue creado por otro usuario");
+        }
+
         rating.setScore(dto.getScore());
         ratingRepository.save(rating);
+
         // Publicar evento de actualizacion de calificacion
         RoomRatingUpdatedEvent event = RoomRatingUpdatedEvent.fromEntity(rating.getId(), rating.getScore());
         eventProducer.publishRoomRatingUpdated(event);

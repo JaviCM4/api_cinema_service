@@ -42,8 +42,7 @@ public class WalletTransactionServiceImplementation implements WalletTransaction
 
     @Override
     @Transactional(readOnly = true)
-    public List<WalletTransactionResponse> findAll(UUID cinemaId)
-            throws ResourceNotFoundException {
+    public List<WalletTransactionResponse> findAll(UUID cinemaId) throws ResourceNotFoundException {
         CinemaWallet wallet = cinemaWalletRepository.findByCinema_Id(cinemaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cartera Digital no encontrada para el cine con id: " + cinemaId));
 

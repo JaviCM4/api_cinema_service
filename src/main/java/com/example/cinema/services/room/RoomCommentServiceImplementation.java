@@ -6,6 +6,7 @@ import com.example.cinema.dtos.room.response.CommentResponse;
 import com.example.cinema.events.comments.RoomCommentCreatedEvent;
 import com.example.cinema.events.comments.RoomCommentDeleteEvent;
 import com.example.cinema.events.comments.RoomCommentUpdateEvent;
+import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
 import com.example.cinema.kafka.CinemaEventProducer;
@@ -50,6 +51,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
         comment.setTheater(theater);
 
         commentRepository.save(comment);
+
         // Publicar evento de creacion de comentario
         RoomCommentCreatedEvent event = RoomCommentCreatedEvent.fromEntity(comment);
         eventProducer.publisRoomCommentCreated(event);
@@ -58,9 +60,13 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateComment(UUID commentId, UpdateCommentRequest dto)
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, ConflictException {
         RoomComment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comentario no encontrado con id: " + commentId));
+
+        if (!comment.getUserId().equals(dto.getUserId())) {
+            throw new ConflictException("No tiene permisos para actualizar este comentario porque fue creado por otro usuario");
+        }
 
         comment.setContent(dto.getContent());
         commentRepository.save(comment);
@@ -72,10 +78,14 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteComment(UUID commentId) throws ResourceNotFoundException {
-        if (!commentRepository.existsById(commentId)) {
-            throw new ResourceNotFoundException("Comentario no encontrado con id: " + commentId);
+    public void deleteComment(UUID commentId, UUID userId) throws ResourceNotFoundException, ConflictException {
+        RoomComment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comentario no encontrado con id: " + commentId));
+
+        if (!comment.getUserId().equals(userId)) {
+            throw new ConflictException("No tiene permisos para eliminar este comentario porque fue creado por otro usuario");
         }
+
         commentRepository.deleteById(commentId);
 
         // Publicar evento de eliminacion de comentario

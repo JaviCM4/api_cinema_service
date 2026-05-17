@@ -89,8 +89,7 @@ public class CinemaServiceImplementation implements CinemaService {
                 .stream()
                 .findFirst()
                 .map(CinemaResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No se encontró un cine para el admin con id: " + adminCinemaId));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró un cine para el admin con id: " + adminCinemaId));
     }
 
 }

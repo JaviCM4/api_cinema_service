@@ -1,5 +1,6 @@
 package com.example.cinema.dtos.cinema.request;
 
+import com.example.cinema.models.cinema.GlobalCost;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
@@ -18,4 +19,11 @@ public class CreateGlobalCostRequest {
     @NotNull(message = "La fecha de vigencia es requerida")
     @FutureOrPresent(message = "La fecha de vigencia debe ser hoy o una fecha futura")
     LocalDate effectiveFrom;
+
+    public GlobalCost createEntity() {
+        GlobalCost cost = new GlobalCost();
+        cost.setDailyCost(dailyCost);
+        cost.setEffectiveFrom(effectiveFrom);
+        return cost;
+    }
 }

@@ -41,11 +41,7 @@ public class TheaterServiceImplementation implements TheaterService {
     private final ShowtimeRepository showtimeRepository;
 
     @Autowired
-    public TheaterServiceImplementation(TheaterRepository theaterRepository,
-                                        SeatRepository seatRepository,
-                                        CinemaRepository cinemaRepository,
-                                        TypeTheaterRepository typeTheaterRepository,
-                                        ShowtimeRepository showtimeRepository) {
+    public TheaterServiceImplementation(TheaterRepository theaterRepository, SeatRepository seatRepository, CinemaRepository cinemaRepository, TypeTheaterRepository typeTheaterRepository, ShowtimeRepository showtimeRepository) {
         this.theaterRepository = theaterRepository;
         this.seatRepository = seatRepository;
         this.cinemaRepository = cinemaRepository;
