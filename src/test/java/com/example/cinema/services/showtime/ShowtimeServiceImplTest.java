@@ -2,7 +2,7 @@ package com.example.cinema.services.showtime;
 
 import com.example.cinema.dtos.showtime.request.CreateShowtimeRequest;
 import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
-import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
+import com.example.cinema.dtos.showtime.response.ShowtimeByTheaterResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.kafka.CinemaEventProducer;
@@ -12,7 +12,6 @@ import com.example.cinema.models.theater.Theater;
 import com.example.cinema.models.theater.VersionType;
 import com.example.cinema.repositories.showtime.ShowtimeRepository;
 import com.example.cinema.repositories.theater.TheaterRepository;
-import com.example.cinema.repositories.theater.VersionTypeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,11 +35,9 @@ public class ShowtimeServiceImplTest {
     private static final UUID SHOWTIME_ID = UUID.randomUUID();
     private static final UUID THEATER_ID = UUID.randomUUID();
     private static final UUID MOVIE_ID = UUID.randomUUID();
-    private static final UUID VERSION_TYPE_ID = UUID.randomUUID();
 
     @Mock private ShowtimeRepository showtimeRepository;
     @Mock private TheaterRepository theaterRepository;
-    @Mock private VersionTypeRepository versionTypeRepository;
     @Mock private CinemaEventProducer eventProducer;
 
     @InjectMocks
@@ -53,14 +49,12 @@ public class ShowtimeServiceImplTest {
         LocalDate date  = LocalDate.now().plusDays(1);
         LocalTime start = LocalTime.of(14, 0);
         LocalTime end   = LocalTime.of(16, 0);
-        CreateShowtimeRequest request = new CreateShowtimeRequest(THEATER_ID, MOVIE_ID, VERSION_TYPE_ID, date, start, end);
+        CreateShowtimeRequest request = new CreateShowtimeRequest(THEATER_ID, MOVIE_ID, VersionType.ORIGINAL, date, start, end);
 
         Theater theater = buildTheater();
-        VersionType versionType = buildVersionType("IMAX");
         ArgumentCaptor<Showtime> captor = ArgumentCaptor.forClass(Showtime.class);
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(theater));
-        when(versionTypeRepository.findById(VERSION_TYPE_ID)).thenReturn(Optional.of(versionType));
         when(showtimeRepository.save(any(Showtime.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
@@ -69,14 +63,13 @@ public class ShowtimeServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(theaterRepository).findById(THEATER_ID),
-                () -> verify(versionTypeRepository).findById(VERSION_TYPE_ID),
                 () -> verify(showtimeRepository).save(captor.capture()),
-                () -> assertEquals(theater,      captor.getValue().getTheater()),
-                () -> assertEquals(MOVIE_ID,     captor.getValue().getMovieId()),
-                () -> assertEquals(versionType,  captor.getValue().getVersionType()),
-                () -> assertEquals(date,         captor.getValue().getDateShowtime()),
-                () -> assertEquals(start,        captor.getValue().getStartShowtime()),
-                () -> assertEquals(end,          captor.getValue().getEndShowtime()),
+                () -> assertEquals(theater,              captor.getValue().getTheater()),
+                () -> assertEquals(MOVIE_ID,             captor.getValue().getMovieId()),
+                () -> assertEquals(VersionType.ORIGINAL, captor.getValue().getVersionType()),
+                () -> assertEquals(date,                 captor.getValue().getDateShowtime()),
+                () -> assertEquals(start,                captor.getValue().getStartShowtime()),
+                () -> assertEquals(end,                  captor.getValue().getEndShowtime()),
                 () -> verify(eventProducer).publishFunctionCreated(any())
         );
     }
@@ -84,7 +77,7 @@ public class ShowtimeServiceImplTest {
     @Test
     void testCreateShowtimeTheaterNotFound() {
         // Arrange
-        CreateShowtimeRequest request = new CreateShowtimeRequest(THEATER_ID, MOVIE_ID, VERSION_TYPE_ID,
+        CreateShowtimeRequest request = new CreateShowtimeRequest(THEATER_ID, MOVIE_ID, VersionType.ORIGINAL,
                 LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.empty());
@@ -98,39 +91,19 @@ public class ShowtimeServiceImplTest {
     }
 
     @Test
-    void testCreateShowtimeVersionTypeNotFound() {
-        // Arrange
-        CreateShowtimeRequest request = new CreateShowtimeRequest(THEATER_ID, MOVIE_ID, VERSION_TYPE_ID,
-                LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
-
-        when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(buildTheater()));
-        when(versionTypeRepository.findById(VERSION_TYPE_ID)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertAll(
-                () -> assertThrows(ResourceNotFoundException.class,
-                        () -> showtimeService.createShowtime(request)),
-                () -> verify(showtimeRepository, never()).save(any())
-        );
-    }
-
-    @Test
     void testUpdateShowtime() throws Exception {
         // Arrange
         UUID newMovieId = UUID.randomUUID();
-        UUID newVersionTypeId = UUID.randomUUID();
         LocalDate newDate = LocalDate.now().plusDays(3);
         LocalTime newStart = LocalTime.of(18, 0);
         LocalTime newEnd = LocalTime.of(20, 0);
 
-        UpdateShowtimeRequest request = new UpdateShowtimeRequest(newMovieId, newVersionTypeId, newDate, newStart, newEnd);
+        UpdateShowtimeRequest request = new UpdateShowtimeRequest(newMovieId, VersionType.DUBBED, newDate, newStart, newEnd);
 
-        Showtime existing    = buildShowtime(LocalDate.now().plusDays(2), LocalTime.of(14, 0), LocalTime.of(16, 0));
-        VersionType newVType = buildVersionType("3D");
+        Showtime existing = buildShowtime(LocalDate.now().plusDays(2), LocalTime.of(14, 0), LocalTime.of(16, 0));
         ArgumentCaptor<Showtime> captor = ArgumentCaptor.forClass(Showtime.class);
 
         when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.of(existing));
-        when(versionTypeRepository.findById(newVersionTypeId)).thenReturn(Optional.of(newVType));
 
         // Act
         showtimeService.updateShowtime(SHOWTIME_ID, request);
@@ -138,20 +111,21 @@ public class ShowtimeServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(showtimeRepository).save(captor.capture()),
-                () -> assertEquals(newMovieId, captor.getValue().getMovieId()),
-                () -> assertEquals(newDate,    captor.getValue().getDateShowtime()),
-                () -> assertEquals(newStart,   captor.getValue().getStartShowtime()),
-                () -> assertEquals(newEnd,     captor.getValue().getEndShowtime()),
-                () -> assertEquals(newVType,   captor.getValue().getVersionType()),
+                () -> assertEquals(newMovieId,        captor.getValue().getMovieId()),
+                () -> assertEquals(newDate,           captor.getValue().getDateShowtime()),
+                () -> assertEquals(newStart,          captor.getValue().getStartShowtime()),
+                () -> assertEquals(newEnd,            captor.getValue().getEndShowtime()),
+                () -> assertEquals(VersionType.DUBBED, captor.getValue().getVersionType()),
                 () -> verify(eventProducer).publishFunctionUpdated(any())
         );
     }
 
     @Test
     void testUpdateShowtimeOnlyMovieId() throws Exception {
-        // Arrange
+        // Arrange — solo cambia movieId; los demás campos obligatorios se reenvían iguales
         UUID newMovieId = UUID.randomUUID();
-        UpdateShowtimeRequest request = new UpdateShowtimeRequest(newMovieId, null, null, null, null);
+        UpdateShowtimeRequest request = new UpdateShowtimeRequest(
+                newMovieId, VersionType.ORIGINAL, null, LocalTime.of(10, 0), LocalTime.of(12, 0));
 
         Showtime existing = buildShowtime(LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
         ArgumentCaptor<Showtime> captor = ArgumentCaptor.forClass(Showtime.class);
@@ -164,15 +138,15 @@ public class ShowtimeServiceImplTest {
         // Assert
         assertAll(
                 () -> verify(showtimeRepository).save(captor.capture()),
-                () -> assertEquals(newMovieId, captor.getValue().getMovieId()),
-                () -> verify(versionTypeRepository, never()).findById(any())
+                () -> assertEquals(newMovieId, captor.getValue().getMovieId())
         );
     }
 
     @Test
     void testUpdateShowtimeTimeConflict() {
-        // Arrange — se actualiza endShowtime a 08:00 pero startShowtime existente es 10:00
-        UpdateShowtimeRequest request = new UpdateShowtimeRequest(null, null, null, null, LocalTime.of(8, 0));
+        // Arrange — endShowtime anterior a startShowtime
+        UpdateShowtimeRequest request = new UpdateShowtimeRequest(
+                MOVIE_ID, VersionType.ORIGINAL, null, LocalTime.of(10, 0), LocalTime.of(8, 0));
 
         Showtime existing = buildShowtime(LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
 
@@ -189,7 +163,8 @@ public class ShowtimeServiceImplTest {
     @Test
     void testUpdateShowtimeNotFound() {
         // Arrange
-        UpdateShowtimeRequest request = new UpdateShowtimeRequest(null, null, null, null, null);
+        UpdateShowtimeRequest request = new UpdateShowtimeRequest(
+                MOVIE_ID, VersionType.ORIGINAL, null, LocalTime.of(10, 0), LocalTime.of(12, 0));
 
         when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.empty());
 
@@ -202,55 +177,37 @@ public class ShowtimeServiceImplTest {
     }
 
     @Test
-    void testUpdateShowtimeVersionTypeNotFound() {
-        // Arrange
-        UUID newVersionTypeId = UUID.randomUUID();
-        UpdateShowtimeRequest request = new UpdateShowtimeRequest(null, newVersionTypeId, null, null, null);
-
-        Showtime existing = buildShowtime(LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
-
-        when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.of(existing));
-        when(versionTypeRepository.findById(newVersionTypeId)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertAll(
-                () -> assertThrows(ResourceNotFoundException.class,
-                        () -> showtimeService.updateShowtime(SHOWTIME_ID, request)),
-                () -> verify(showtimeRepository, never()).save(any())
-        );
-    }
-
-    @Test
-    void testFindShowtimes() {
+    void testFindShowtimesByTheater() {
         // Arrange — función mañana, sin alerta
         Showtime showtime = buildShowtime(
                 LocalDate.now().plusDays(1), LocalTime.of(14, 0), LocalTime.of(16, 0));
 
-        when(showtimeRepository.findByFilters(MOVIE_ID, null, null))
+        when(showtimeRepository.findByTheater_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(THEATER_ID))
                 .thenReturn(List.of(showtime));
 
         // Act
-        List<ShowtimeResponse> result = showtimeService.findShowtimes(MOVIE_ID, null, null);
+        List<ShowtimeByTheaterResponse> result = showtimeService.findShowtimesByTheater(THEATER_ID);
 
         // Assert
         assertAll(
                 () -> assertEquals(1, result.size()),
+                () -> assertEquals(MOVIE_ID, result.get(0).getMovieId()),
                 () -> assertNull(result.get(0).getAlert())
         );
     }
 
     @Test
-    void testFindShowtimesWithAlert() {
+    void testFindShowtimesByTheaterWithAlert() {
         // Arrange — función empieza en 10 minutos (dentro del umbral de 30 min)
         LocalTime start = LocalTime.now().plusMinutes(10);
-        LocalTime end   = LocalTime.now().plusMinutes(120);
+        LocalTime end   = start.plusMinutes(120);
         Showtime showtime = buildShowtime(LocalDate.now(), start, end);
 
-        when(showtimeRepository.findByFilters(null, THEATER_ID, null))
+        when(showtimeRepository.findByTheater_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(THEATER_ID))
                 .thenReturn(List.of(showtime));
 
         // Act
-        List<ShowtimeResponse> result = showtimeService.findShowtimes(null, THEATER_ID, null);
+        List<ShowtimeByTheaterResponse> result = showtimeService.findShowtimesByTheater(THEATER_ID);
 
         // Assert
         assertAll(
@@ -260,16 +217,16 @@ public class ShowtimeServiceImplTest {
     }
 
     @Test
-    void testFindShowtimesEndedShowtime() {
-        // Arrange — función terminó ayer → se marca inactiva y no aparece en el resultado
+    void testFindShowtimesByTheaterPastShowtime() {
+        // Arrange — función ya pasó → se marca inactiva y no aparece
         Showtime ended = buildShowtime(
                 LocalDate.now().minusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
 
-        when(showtimeRepository.findByFilters(null, null, null))
+        when(showtimeRepository.findByTheater_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(THEATER_ID))
                 .thenReturn(List.of(ended));
 
         // Act
-        List<ShowtimeResponse> result = showtimeService.findShowtimes(null, null, null);
+        List<ShowtimeByTheaterResponse> result = showtimeService.findShowtimesByTheater(THEATER_ID);
 
         // Assert
         assertAll(
@@ -280,13 +237,13 @@ public class ShowtimeServiceImplTest {
     }
 
     @Test
-    void testFindShowtimesEmpty() {
+    void testFindShowtimesByTheaterEmpty() {
         // Arrange
-        when(showtimeRepository.findByFilters(any(), any(), any()))
-                .thenReturn(Collections.emptyList());
+        when(showtimeRepository.findByTheater_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(THEATER_ID))
+                .thenReturn(List.of());
 
         // Act
-        List<ShowtimeResponse> result = showtimeService.findShowtimes(null, null, null);
+        List<ShowtimeByTheaterResponse> result = showtimeService.findShowtimesByTheater(THEATER_ID);
 
         // Assert
         assertTrue(result.isEmpty());
@@ -297,7 +254,7 @@ public class ShowtimeServiceImplTest {
         s.setId(SHOWTIME_ID);
         s.setTheater(buildTheater());
         s.setMovieId(MOVIE_ID);
-        s.setVersionType(buildVersionType("IMAX"));
+        s.setVersionType(VersionType.ORIGINAL);
         s.setDateShowtime(date);
         s.setStartShowtime(start);
         s.setEndShowtime(end);
@@ -318,12 +275,5 @@ public class ShowtimeServiceImplTest {
         c.setId(UUID.randomUUID());
         c.setName("Cinepolis");
         return c;
-    }
-
-    private VersionType buildVersionType(String name) {
-        VersionType vt = new VersionType();
-        vt.setId(VERSION_TYPE_ID);
-        vt.setName(name);
-        return vt;
     }
 }

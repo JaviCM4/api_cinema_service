@@ -77,7 +77,6 @@ public class GlobalCostServiceImplTest {
         GlobalCostResponse result = globalCostService.getLatest();
 
         assertAll(
-                () -> assertEquals(globalCost.getId(),            result.getId()),
                 () -> assertEquals(new BigDecimal("450.00"),      result.getDailyCost()),
                 () -> assertEquals(globalCost.getEffectiveFrom(), result.getEffectiveFrom())
         );

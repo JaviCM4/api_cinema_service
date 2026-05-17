@@ -3,6 +3,7 @@ package com.example.cinema.services.cinema;
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
+import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
@@ -195,7 +196,7 @@ public class CinemaServiceImplTest {
         when(cinemaRepository.findAll()).thenReturn(List.of(c1, c2));
 
         // Act
-        List<CinemaResponse> result = cinemaService.findAll();
+        List<CinemaSummaryResponse> result = cinemaService.findAll();
 
         // Assert
         assertAll(
@@ -211,10 +212,37 @@ public class CinemaServiceImplTest {
         when(cinemaRepository.findAll()).thenReturn(List.of());
 
         // Act
-        List<CinemaResponse> result = cinemaService.findAll();
+        List<CinemaSummaryResponse> result = cinemaService.findAll();
 
         // Assert
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testGetByAdminCinemaId() throws Exception {
+        // Arrange
+        Cinema cinema = buildCinema("Cinepolis Centro");
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(List.of(cinema));
+
+        // Act
+        CinemaResponse result = cinemaService.getByAdminCinemaId(ADMIN_ID);
+
+        // Assert
+        assertAll(
+                () -> assertEquals(CINEMA_ID,  result.getId()),
+                () -> assertEquals(COUNTRY_ID, result.getCountryId()),
+                () -> assertEquals("Cinepolis Centro", result.getName())
+        );
+    }
+
+    @Test
+    void testGetByAdminCinemaIdNotFound() {
+        // Arrange
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(List.of());
+
+        // Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> cinemaService.getByAdminCinemaId(ADMIN_ID));
     }
 
     private Cinema buildCinema(String name) {
