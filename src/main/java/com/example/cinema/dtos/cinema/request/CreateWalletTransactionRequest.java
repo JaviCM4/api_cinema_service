@@ -9,9 +9,13 @@ import jakarta.validation.constraints.Size;
 import lombok.Value;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Value
 public class CreateWalletTransactionRequest {
+
+    @NotNull(message = "El id del usuario es requerido")
+    UUID adminCinemaId;
 
     @NotNull(message = "El monto es requerido")
     @DecimalMin(value = "0.01", message = "El monto debe ser mayor a 0")

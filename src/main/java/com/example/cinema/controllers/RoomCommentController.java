@@ -47,8 +47,7 @@ public class RoomCommentController {
     }
 
     @DeleteMapping("/v1/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId,
-                                              @RequestParam UUID userId)
+    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId, @RequestParam UUID userId)
             throws ResourceNotFoundException, ConflictException {
         commentService.deleteComment(commentId, userId);
         return ResponseEntity.noContent().build();

@@ -7,6 +7,7 @@ import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
 import com.example.cinema.models.cinema.WalletTransaction;
 import com.example.cinema.models.enums.WalletTxType;
+import com.example.cinema.repositories.cinema.CinemaRepository;
 import com.example.cinema.repositories.cinema.CinemaWalletRepository;
 import com.example.cinema.repositories.cinema.WalletTransactionRepository;
 import org.junit.jupiter.api.Test;
@@ -30,10 +31,12 @@ import static org.mockito.Mockito.*;
 public class WalletTransactionServiceImplTest {
 
     private static final UUID CINEMA_ID  = UUID.randomUUID();
+    private static final UUID ADMIN_ID   = UUID.randomUUID();
     private static final UUID WALLET_ID  = UUID.randomUUID();
 
     @Mock private WalletTransactionRepository walletTransactionRepository;
     @Mock private CinemaWalletRepository      cinemaWalletRepository;
+    @Mock private CinemaRepository            cinemaRepository;
 
     @InjectMocks
     private WalletTransactionServiceImplementation walletTransactionService;
@@ -43,17 +46,18 @@ public class WalletTransactionServiceImplTest {
     @Test
     void testCreateRecharge() throws Exception {
         CreateWalletTransactionRequest request =
-                new CreateWalletTransactionRequest(new BigDecimal("100.00"), "Recarga de prueba");
+                new CreateWalletTransactionRequest(ADMIN_ID, new BigDecimal("100.00"), "Recarga de prueba");
 
         CinemaWallet wallet = buildWallet(new BigDecimal("50.00"));
         ArgumentCaptor<WalletTransaction> txCaptor    = ArgumentCaptor.forClass(WalletTransaction.class);
         ArgumentCaptor<CinemaWallet>      walletCaptor = ArgumentCaptor.forClass(CinemaWallet.class);
 
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.of(wallet));
         when(walletTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(cinemaWalletRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        walletTransactionService.createRecharge(CINEMA_ID, request);
+        walletTransactionService.createRecharge(request);
 
         verify(walletTransactionRepository).save(txCaptor.capture());
         verify(cinemaWalletRepository).save(walletCaptor.capture());
@@ -73,15 +77,16 @@ public class WalletTransactionServiceImplTest {
     @Test
     void testCreateRechargeWithoutDescription() throws Exception {
         CreateWalletTransactionRequest request =
-                new CreateWalletTransactionRequest(new BigDecimal("200.00"), null);
+                new CreateWalletTransactionRequest(ADMIN_ID, new BigDecimal("200.00"), null);
 
         CinemaWallet wallet = buildWallet(BigDecimal.ZERO);
 
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.of(wallet));
         when(walletTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(cinemaWalletRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        walletTransactionService.createRecharge(CINEMA_ID, request);
+        walletTransactionService.createRecharge(request);
 
         ArgumentCaptor<WalletTransaction> txCaptor = ArgumentCaptor.forClass(WalletTransaction.class);
         verify(walletTransactionRepository).save(txCaptor.capture());
@@ -89,14 +94,29 @@ public class WalletTransactionServiceImplTest {
     }
 
     @Test
+    void testCreateRechargeAdminNotFound() {
+        CreateWalletTransactionRequest request =
+                new CreateWalletTransactionRequest(ADMIN_ID, new BigDecimal("50.00"), null);
+
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> walletTransactionService.createRecharge(request));
+
+        verify(walletTransactionRepository, never()).save(any());
+        verify(cinemaWalletRepository, never()).save(any());
+    }
+
+    @Test
     void testCreateRechargeWalletNotFound() {
         CreateWalletTransactionRequest request =
-                new CreateWalletTransactionRequest(new BigDecimal("50.00"), null);
+                new CreateWalletTransactionRequest(ADMIN_ID, new BigDecimal("50.00"), null);
 
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> walletTransactionService.createRecharge(CINEMA_ID, request));
+                () -> walletTransactionService.createRecharge(request));
 
         verify(walletTransactionRepository, never()).save(any());
         verify(cinemaWalletRepository, never()).save(any());
@@ -113,11 +133,12 @@ public class WalletTransactionServiceImplTest {
         WalletTransaction tx2 = buildTransaction(wallet, new BigDecimal("100.00"), "Segunda recarga",
                 LocalDateTime.now());
 
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.of(wallet));
         when(walletTransactionRepository.findByCinemaWallet_IdOrderByTransactionDateDesc(WALLET_ID))
                 .thenReturn(List.of(tx2, tx1));
 
-        List<WalletTransactionResponse> result = walletTransactionService.findAll(CINEMA_ID);
+        List<WalletTransactionResponse> result = walletTransactionService.findAll(ADMIN_ID);
 
         assertAll(
                 () -> assertEquals(2, result.size()),
@@ -131,22 +152,35 @@ public class WalletTransactionServiceImplTest {
     void testFindAllEmpty() throws Exception {
         CinemaWallet wallet = buildWallet(BigDecimal.ZERO);
 
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.of(wallet));
         when(walletTransactionRepository.findByCinemaWallet_IdOrderByTransactionDateDesc(WALLET_ID))
                 .thenReturn(List.of());
 
-        List<WalletTransactionResponse> result = walletTransactionService.findAll(CINEMA_ID);
+        List<WalletTransactionResponse> result = walletTransactionService.findAll(ADMIN_ID);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
     void testFindAllWalletNotFound() {
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> walletTransactionService.findAll(CINEMA_ID));
+                () -> walletTransactionService.findAll(ADMIN_ID));
 
+        verify(walletTransactionRepository, never()).findByCinemaWallet_IdOrderByTransactionDateDesc(any());
+    }
+
+    @Test
+    void testFindAllAdminNotFound() {
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> walletTransactionService.findAll(ADMIN_ID));
+
+        verify(cinemaWalletRepository, never()).findByCinema_Id(any());
         verify(walletTransactionRepository, never()).findByCinemaWallet_IdOrderByTransactionDateDesc(any());
     }
 
@@ -160,6 +194,13 @@ public class WalletTransactionServiceImplTest {
         wallet.setCinema(cinema);
         wallet.setBalance(balance);
         return wallet;
+    }
+
+    private Cinema buildCinema() {
+        Cinema cinema = new Cinema();
+        cinema.setId(CINEMA_ID);
+        cinema.setAdminCinemaId(ADMIN_ID);
+        return cinema;
     }
 
     private WalletTransaction buildTransaction(CinemaWallet wallet, BigDecimal amount,

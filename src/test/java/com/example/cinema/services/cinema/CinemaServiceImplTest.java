@@ -222,7 +222,7 @@ public class CinemaServiceImplTest {
     void testGetByAdminCinemaId() throws Exception {
         // Arrange
         Cinema cinema = buildCinema("Cinepolis Centro");
-        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(List.of(cinema));
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(cinema));
 
         // Act
         CinemaResponse result = cinemaService.getByAdminCinemaId(ADMIN_ID);
@@ -238,7 +238,7 @@ public class CinemaServiceImplTest {
     @Test
     void testGetByAdminCinemaIdNotFound() {
         // Arrange
-        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(List.of());
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.empty());
 
         // Assert
         assertThrows(ResourceNotFoundException.class,

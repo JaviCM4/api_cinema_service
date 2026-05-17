@@ -86,8 +86,6 @@ public class CinemaServiceImplementation implements CinemaService {
     @Transactional(readOnly = true)
     public CinemaResponse getByAdminCinemaId(UUID adminCinemaId) throws ResourceNotFoundException {
         return cinemaRepository.findByAdminCinemaId(adminCinemaId)
-                .stream()
-                .findFirst()
                 .map(CinemaResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró un cine para el admin con id: " + adminCinemaId));
     }

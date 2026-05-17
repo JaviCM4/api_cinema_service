@@ -24,16 +24,16 @@ public class WalletTransactionController {
         this.walletTransactionService = walletTransactionService;
     }
 
-    @PostMapping("/{cinemaId}/recharge")
-    public ResponseEntity<Void> createRecharge(@PathVariable UUID cinemaId, @Valid @RequestBody CreateWalletTransactionRequest dto)
+    @PostMapping
+    public ResponseEntity<Void> createRecharge(@Valid @RequestBody CreateWalletTransactionRequest dto)
             throws ResourceNotFoundException {
-        walletTransactionService.createRecharge(cinemaId, dto);
+        walletTransactionService.createRecharge(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/{cinemaId}")
-    public ResponseEntity<List<WalletTransactionResponse>> findAll(@PathVariable UUID cinemaId)
+    @GetMapping("/{adminCinemaId}")
+    public ResponseEntity<List<WalletTransactionResponse>> findAll(@PathVariable UUID adminCinemaId)
             throws ResourceNotFoundException {
-        return ResponseEntity.ok(walletTransactionService.findAll(cinemaId));
+        return ResponseEntity.ok(walletTransactionService.findAll(adminCinemaId));
     }
 }
