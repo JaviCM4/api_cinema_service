@@ -6,12 +6,10 @@ import lombok.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Value
 public class WalletTransactionResponse {
 
-    UUID id;
     BigDecimal amount;
     WalletTxType type;
     String description;
@@ -19,7 +17,6 @@ public class WalletTransactionResponse {
 
     public static WalletTransactionResponse from(WalletTransaction tx) {
         return new WalletTransactionResponse(
-                tx.getId(),
                 tx.getAmount(),
                 tx.getType(),
                 tx.getDescription(),
