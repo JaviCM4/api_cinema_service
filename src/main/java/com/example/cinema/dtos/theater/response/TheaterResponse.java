@@ -4,14 +4,12 @@ import com.example.cinema.models.theater.Theater;
 import lombok.Value;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Value
 public class TheaterResponse {
 
     UUID id;
-    UUID cinemaId;
     UUID typeTheaterId;
     String typeTheaterName;
     String name;
@@ -22,12 +20,10 @@ public class TheaterResponse {
     boolean allowRatings;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
-    List<SeatResponse> seats;
 
-    public static TheaterResponse from(Theater theater, List<SeatResponse> seats) {
+    public static TheaterResponse from(Theater theater) {
         return new TheaterResponse(
                 theater.getId(),
-                theater.getCinema().getId(),
                 theater.getTypeTheater().getId(),
                 theater.getTypeTheater().getName(),
                 theater.getName(),
@@ -37,8 +33,7 @@ public class TheaterResponse {
                 theater.isAllowComments(),
                 theater.isAllowRatings(),
                 theater.getCreatedAt(),
-                theater.getUpdatedAt(),
-                seats
+                theater.getUpdatedAt()
         );
     }
 }

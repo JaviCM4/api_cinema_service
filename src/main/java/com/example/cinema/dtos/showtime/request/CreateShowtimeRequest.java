@@ -3,6 +3,7 @@ package com.example.cinema.dtos.showtime.request;
 import com.example.cinema.models.showtime.Showtime;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.models.theater.VersionType;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.Value;
@@ -20,8 +21,8 @@ public class CreateShowtimeRequest {
     @NotNull(message = "El id de la película es requerido")
     UUID movieId;
 
-    @NotNull(message = "El id del tipo de versión es requerido")
-    UUID versionTypeId;
+    @NotNull(message = "El tipo de versión es requerido")
+    VersionType versionType;
 
     @NotNull(message = "La fecha de la función es requerida")
     @FutureOrPresent(message = "La fecha de la función debe ser hoy o una fecha futura")
@@ -33,17 +34,17 @@ public class CreateShowtimeRequest {
     @NotNull(message = "La hora de fin es requerida")
     LocalTime endShowtime;
 
-    @jakarta.validation.constraints.AssertTrue(message = "La hora de fin debe ser posterior a la hora de inicio")
+    @AssertTrue(message = "La hora de fin debe ser posterior a la hora de inicio")
     public boolean isEndAfterStart() {
         if (startShowtime == null || endShowtime == null) return true;
         return endShowtime.isAfter(startShowtime);
     }
 
-    public Showtime createEntity(Theater theater, VersionType versionType) {
+    public Showtime createEntity(Theater theater) {
         Showtime showtime = new Showtime();
         showtime.setTheater(theater);
         showtime.setMovieId(this.movieId);
-        showtime.setVersionType(versionType);
+        showtime.setVersionType(this.versionType);
         showtime.setDateShowtime(this.dateShowtime);
         showtime.setStartShowtime(this.startShowtime);
         showtime.setEndShowtime(this.endShowtime);
