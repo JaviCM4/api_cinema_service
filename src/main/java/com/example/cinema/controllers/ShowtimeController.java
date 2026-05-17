@@ -5,6 +5,7 @@ import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
 import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
+import com.example.cinema.models.theater.VersionType;
 import com.example.cinema.services.showtime.inteface.ShowtimeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class ShowtimeController {
 
     @PostMapping
     public ResponseEntity<Void> createShowtime(@Valid @RequestBody CreateShowtimeRequest request)
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, ConflictException {
         showtimeService.createShowtime(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -40,8 +41,4 @@ public class ShowtimeController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping
-    public ResponseEntity<List<ShowtimeResponse>> findShowtimes(@RequestParam(required = false) UUID movieId, @RequestParam(required = false) UUID theaterId, @RequestParam(required = false) UUID versionTypeId) {
-        return ResponseEntity.ok(showtimeService.findShowtimes(movieId, theaterId, versionTypeId));
-    }
 }

@@ -28,7 +28,7 @@ public class GlobalCostController {
         return ResponseEntity.status(201).build();
     }
 
-    @GetMapping("/latest")
+    @GetMapping
     public ResponseEntity<GlobalCostResponse> getLatest() throws ResourceNotFoundException {
         return ResponseEntity.ok(globalCostService.getLatest());
     }

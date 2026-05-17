@@ -14,9 +14,11 @@ public class TheaterPrincingRequest {
 
     @NotNull(message = "El tipo de teatro es requerido")
     UUID typeTheaterId;
+
     @NotNull(message = "El precio es requerido")
     @Min(value = 0, message = "El precio debe ser un valor positivo")
     BigDecimal price;
+
     @NotNull(message = "La fecha de vigencia es requerida")
     @FutureOrPresent(message = "La fecha de vigencia debe ser hoy o en el futuro")
     LocalDate effectiveDate;

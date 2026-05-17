@@ -14,10 +14,10 @@ import java.util.UUID;
 @Value
 public class CreateTheaterRequest {
 
-    @NotNull(message = "El id del cine es requerido")
+    @NotNull(message = "El ID del cine es requerido")
     UUID cinemaId;
 
-    @NotNull(message = "El id del tipo de sala es requerido")
+    @NotNull(message = "El ID del tipo de sala es requerido")
     UUID typeTheaterId;
 
     @NotBlank(message = "El nombre de la sala es requerido")

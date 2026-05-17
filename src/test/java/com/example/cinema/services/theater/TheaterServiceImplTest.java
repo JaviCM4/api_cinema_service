@@ -2,14 +2,18 @@ package com.example.cinema.services.theater;
 
 import com.example.cinema.dtos.theater.request.CreateTheaterRequest;
 import com.example.cinema.dtos.theater.request.UpdateTheaterRequest;
+import com.example.cinema.dtos.theater.response.TheaterClientResponse;
 import com.example.cinema.dtos.theater.response.TheaterResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
+import com.example.cinema.models.showtime.Showtime;
 import com.example.cinema.models.theater.Seat;
 import com.example.cinema.models.theater.Theater;
 import com.example.cinema.models.theater.TypeTheater;
+import com.example.cinema.models.theater.VersionType;
 import com.example.cinema.repositories.cinema.CinemaRepository;
+import com.example.cinema.repositories.showtime.ShowtimeRepository;
 import com.example.cinema.repositories.theater.SeatRepository;
 import com.example.cinema.repositories.theater.TheaterRepository;
 import com.example.cinema.repositories.theater.TypeTheaterRepository;
@@ -42,6 +46,7 @@ public class TheaterServiceImplTest {
     @Mock private SeatRepository seatRepository;
     @Mock private CinemaRepository cinemaRepository;
     @Mock private TypeTheaterRepository typeTheaterRepository;
+    @Mock private ShowtimeRepository showtimeRepository;
 
     @InjectMocks
     private TheaterServiceImplementation theaterService;
@@ -141,15 +146,17 @@ public class TheaterServiceImplTest {
 
     @Test
     void testUpdateTheaterOnlyNonNullFields() throws Exception {
-        // Arrange
-        UpdateTheaterRequest request = new UpdateTheaterRequest(null, "Sala B", null, null, null);
+        // Arrange — actualización completa; solo cambia el nombre
         TypeTheater originalType = buildTypeTheater("2D");
+        originalType.setId(TYPE_THEATER_ID);
+        UpdateTheaterRequest request = new UpdateTheaterRequest(TYPE_THEATER_ID, "Sala B", false, true, false);
         Theater existing = buildTheater("Sala A", buildCinema(), originalType);
         existing.setVisible(false);
 
         ArgumentCaptor<Theater> captor = ArgumentCaptor.forClass(Theater.class);
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(existing));
+        when(typeTheaterRepository.findById(TYPE_THEATER_ID)).thenReturn(Optional.of(originalType));
         when(theaterRepository.save(any(Theater.class))).thenReturn(existing);
 
         // Act
@@ -167,7 +174,7 @@ public class TheaterServiceImplTest {
     @Test
     void testUpdateTheaterNotFound() {
         // Arrange
-        UpdateTheaterRequest request = new UpdateTheaterRequest(null, "Sala B", null, null, null);
+        UpdateTheaterRequest request = new UpdateTheaterRequest(TYPE_THEATER_ID, "Sala B", true, false, true);
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.empty());
 
         // Assert
@@ -179,7 +186,7 @@ public class TheaterServiceImplTest {
     void testUpdateTheaterTypeNotFound() {
         // Arrange
         UUID newTypeId = UUID.randomUUID();
-        UpdateTheaterRequest request = new UpdateTheaterRequest(newTypeId, null, null, null, null);
+        UpdateTheaterRequest request = new UpdateTheaterRequest(newTypeId, "Sala B", true, false, true);
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(buildTheater("Sala 1", buildCinema(), buildTypeTheater("2D"))));
         when(typeTheaterRepository.findById(newTypeId)).thenReturn(Optional.empty());
@@ -190,38 +197,47 @@ public class TheaterServiceImplTest {
     }
 
     @Test
-    void testGetTheater() throws Exception {
+    void testFindTheatersByCinema() {
         // Arrange
-        Cinema cinema    = buildCinema();
-        TypeTheater type = buildTypeTheater("IMAX");
-        Theater theater  = buildTheater("Sala IMAX", cinema, type);
-        Seat seat1       = buildSeat(theater, "A", 1);
-        Seat seat2       = buildSeat(theater, "A", 2);
+        Cinema cinema = buildCinema();
+        TypeTheater type = buildTypeTheater("2D");
+        Theater t1 = buildTheater("Sala 1", cinema, type);
+        Theater t2 = buildTheater("Sala 2", cinema, type);
+        t2.setId(UUID.randomUUID());
 
-        when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(theater));
-        when(seatRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(seat1, seat2));
+        when(theaterRepository.findByCinema_Id(CINEMA_ID)).thenReturn(List.of(t1, t2));
 
         // Act
-        TheaterResponse result = theaterService.getTheater(THEATER_ID);
+        List<TheaterResponse> result = theaterService.findTheatersByCinema(CINEMA_ID);
 
         // Assert
-        assertAll(
-                () -> assertEquals(THEATER_ID,  result.getId()),
-                () -> assertEquals("Sala IMAX", result.getName()),
-                () -> assertEquals(2,            result.getSeats().size()),
-                () -> assertEquals("A",          result.getSeats().get(0).getRowName()),
-                () -> assertEquals(1,            result.getSeats().get(0).getColNumber())
-        );
+        assertEquals(2, result.size());
     }
 
     @Test
-    void testGetTheaterNotFound() {
+    void testFindTheatersByCinemaEmpty() {
         // Arrange
-        when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.empty());
+        when(theaterRepository.findByCinema_Id(CINEMA_ID)).thenReturn(List.of());
+
+        // Act
+        List<TheaterResponse> result = theaterService.findTheatersByCinema(CINEMA_ID);
 
         // Assert
-        assertThrows(ResourceNotFoundException.class, () -> theaterService.getTheater(THEATER_ID));
-        verify(seatRepository, never()).findByTheater_Id(any());
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testFindTheatersByMovieEmpty() {
+        // Arrange
+        UUID movieId = UUID.randomUUID();
+        when(showtimeRepository.findByMovieIdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(movieId))
+                .thenReturn(List.of());
+
+        // Act
+        List<TheaterClientResponse> result = theaterService.findTheatersByMovie(movieId);
+
+        // Assert
+        assertTrue(result.isEmpty());
     }
 
     private Cinema buildCinema() {

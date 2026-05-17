@@ -3,31 +3,24 @@ package com.example.cinema.dtos.cinema.response;
 import com.example.cinema.models.cinema.Cinema;
 import lombok.Value;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Value
-public class CinemaResponse {
+public class CinemaSummaryResponse {
 
     UUID id;
-    UUID countryId;
     String name;
     String address;
     String phone;
     String email;
-    LocalDateTime createdAt;
-    LocalDateTime updatedAt;
 
-    public static CinemaResponse from(Cinema cinema) {
-        return new CinemaResponse(
+    public static CinemaSummaryResponse from(Cinema cinema) {
+        return new CinemaSummaryResponse(
                 cinema.getId(),
-                cinema.getCountryId(),
                 cinema.getName(),
                 cinema.getAddress(),
                 cinema.getPhone(),
-                cinema.getEmail(),
-                cinema.getCreatedAt(),
-                cinema.getUpdatedAt()
+                cinema.getEmail()
         );
     }
 }

@@ -10,20 +10,20 @@ import java.util.UUID;
 @Value
 public class CreateCinemaRequest {
 
-    @NotNull
+    @NotNull(message = "El ID del administrador del cine es requerido")
     UUID adminCinemaId;
 
-    @NotNull
+    @NotNull(message = "El ID del país es requerido")
     UUID countryId;
 
-    @NotBlank
+    @NotBlank(message = "El nombre del cine es requerido")
     @Size(min = 2, max = 255)
     String name;
 
     @Size(max = 500)
     String address;
 
-    @Pattern(regexp = "^[+]?[0-9\\s\\-().]{7,20}$", message = "Formato de número de teléfono inválido")
+    @Pattern(regexp = "^[+]?[0-9\\s\\-().]{8,20}$", message = "Formato de número de teléfono inválido")
     String phone;
 
     @Email

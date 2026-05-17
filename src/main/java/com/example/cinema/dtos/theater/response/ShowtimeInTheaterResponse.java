@@ -1,4 +1,4 @@
-package com.example.cinema.dtos.showtime.response;
+package com.example.cinema.dtos.theater.response;
 
 import com.example.cinema.models.showtime.Showtime;
 import lombok.Value;
@@ -8,22 +8,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Value
-public class ShowtimeResponse {
+public class ShowtimeInTheaterResponse {
 
     UUID id;
-    String theaterName;
-    UUID movieId;
     String versionTypeName;
     LocalDate dateShowtime;
     String startShowtime;
     String endShowtime;
     String alert;
 
-    public static ShowtimeResponse from(Showtime showtime, String alert) {
-        return new ShowtimeResponse(
+    public static ShowtimeInTheaterResponse from(Showtime showtime, String alert) {
+        return new ShowtimeInTheaterResponse(
                 showtime.getId(),
-                showtime.getTheater().getName(),
-                showtime.getMovieId(),
                 showtime.getVersionType().name(),
                 showtime.getDateShowtime(),
                 showtime.getStartShowtime().format(DateTimeFormatter.ofPattern("HH:mm")),

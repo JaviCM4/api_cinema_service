@@ -44,6 +44,6 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
         // Publicar evento de creacion de costo operativo
         OperatingCostCreatedEvent event = OperatingCostCreatedEvent.fromEntity(savedOperatingCost);
         eventProducer.publishOperatingCostCreated(event);
-
+        
     }
 }
