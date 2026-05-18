@@ -1,6 +1,7 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateOperatingCostRequest;
+import com.example.cinema.dtos.cinema.response.CinemaOperatingCostSummaryResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.kafka.CinemaEventProducer;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -98,6 +100,79 @@ public class OperatingCostServiceImplTest {
         verify(operatingCostRepository, never()).save(any());
     }
 
+    // ─── getAllOperatingCostSummaries ──────────────────────────────────────────
+
+    @Test
+    void testGetAllOperatingCostSummaries() {
+        // Escenario con fechas relativas al día actual para que sea determinista:
+        // cost1 vigente desde hace 7 días, cost2 desde hace 2 días
+        // Período 1: 5 días × 500  = 2500
+        // Período 2: 2 días × 600  = 1200  → total 3700
+        LocalDate today = LocalDate.now();
+        LocalDate date1 = today.minusDays(7);
+        LocalDate date2 = today.minusDays(2);
+
+        Cinema cinema = buildCinema();
+        OperatingCost cost1 = buildOperatingCostWithDate(cinema, new BigDecimal("500.00"), date1);
+        OperatingCost cost2 = buildOperatingCostWithDate(cinema, new BigDecimal("600.00"), date2);
+
+        when(cinemaRepository.findAll()).thenReturn(List.of(cinema));
+        when(operatingCostRepository.findByCinema_IdOrderByEffectiveFromAsc(CINEMA_ID))
+                .thenReturn(List.of(cost1, cost2));
+
+        List<CinemaOperatingCostSummaryResponse> results =
+                operatingCostService.getAllOperatingCostSummaries();
+
+        assertEquals(1, results.size());
+        CinemaOperatingCostSummaryResponse result = results.get(0);
+        assertAll(
+                () -> assertEquals(CINEMA_ID,             result.getCinemaId()),
+                () -> assertEquals(cinema.getName(),      result.getCinemaName()),
+                () -> assertEquals(2,                     result.getRecords().size()),
+                () -> assertEquals(new BigDecimal("500.00"),  result.getRecords().get(0).getDailyCost()),
+                () -> assertEquals(date1,                 result.getRecords().get(0).getEffectiveFrom()),
+                () -> assertEquals(5L,                    result.getRecords().get(0).getActiveDays()),
+                () -> assertEquals(new BigDecimal("2500.00"), result.getRecords().get(0).getPeriodCost()),
+                () -> assertEquals(new BigDecimal("600.00"),  result.getRecords().get(1).getDailyCost()),
+                () -> assertEquals(date2,                 result.getRecords().get(1).getEffectiveFrom()),
+                () -> assertEquals(2L,                    result.getRecords().get(1).getActiveDays()),
+                () -> assertEquals(new BigDecimal("1200.00"), result.getRecords().get(1).getPeriodCost()),
+                () -> assertEquals(new BigDecimal("3700.00"), result.getTotalCost())
+        );
+    }
+
+    @Test
+    void testGetAllOperatingCostSummariesNoCinemas() {
+        when(cinemaRepository.findAll()).thenReturn(List.of());
+
+        List<CinemaOperatingCostSummaryResponse> results =
+                operatingCostService.getAllOperatingCostSummaries();
+
+        assertTrue(results.isEmpty());
+        verify(operatingCostRepository, never()).findByCinema_IdOrderByEffectiveFromAsc(any());
+    }
+
+    @Test
+    void testGetAllOperatingCostSummariesCinemaWithNoRecords() {
+        Cinema cinema = buildCinema();
+
+        when(cinemaRepository.findAll()).thenReturn(List.of(cinema));
+        when(operatingCostRepository.findByCinema_IdOrderByEffectiveFromAsc(CINEMA_ID))
+                .thenReturn(List.of());
+
+        List<CinemaOperatingCostSummaryResponse> results =
+                operatingCostService.getAllOperatingCostSummaries();
+
+        assertEquals(1, results.size());
+        CinemaOperatingCostSummaryResponse result = results.get(0);
+        assertAll(
+                () -> assertEquals(CINEMA_ID,        result.getCinemaId()),
+                () -> assertEquals(cinema.getName(), result.getCinemaName()),
+                () -> assertTrue(result.getRecords().isEmpty()),
+                () -> assertEquals(BigDecimal.ZERO,  result.getTotalCost())
+        );
+    }
+
     private Cinema buildCinema() {
         Cinema cinema = new Cinema();
         cinema.setId(CINEMA_ID);
@@ -105,6 +180,16 @@ public class OperatingCostServiceImplTest {
         cinema.setCreatedAt(LocalDateTime.now());
         cinema.setUpdatedAt(LocalDateTime.now());
         return cinema;
+    }
+
+    private OperatingCost buildOperatingCostWithDate(Cinema cinema, BigDecimal dailyCost, LocalDate effectiveFrom) {
+        OperatingCost cost = new OperatingCost();
+        cost.setId(UUID.randomUUID());
+        cost.setCinema(cinema);
+        cost.setDailyCost(dailyCost);
+        cost.setEffectiveFrom(effectiveFrom);
+        cost.setCreatedAt(LocalDateTime.now());
+        return cost;
     }
 
     private OperatingCost buildOperatingCost() {

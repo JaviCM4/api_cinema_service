@@ -1,6 +1,8 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateOperatingCostRequest;
+import com.example.cinema.dtos.cinema.response.CinemaOperatingCostSummaryResponse;
+import com.example.cinema.dtos.cinema.response.OperatingCostDetailResponse;
 import com.example.cinema.events.operatingcost.OperatingCostCreatedEvent;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
@@ -13,6 +15,13 @@ import com.example.cinema.services.cinema.inteface.OperatingCostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class OperatingCostServiceImplementation implements OperatingCostService {
@@ -44,6 +53,33 @@ public class OperatingCostServiceImplementation implements OperatingCostService 
         // Publicar evento de creacion de costo operativo
         OperatingCostCreatedEvent event = OperatingCostCreatedEvent.fromEntity(savedOperatingCost);
         eventProducer.publishOperatingCostCreated(event);
-        
+    }
+
+    @Override
+    public List<CinemaOperatingCostSummaryResponse> getAllOperatingCostSummaries() {
+        List<Cinema> cinemas = cinemaRepository.findAll();
+        LocalDate today = LocalDate.now();
+
+        return cinemas.stream().map(cinema -> {
+            List<OperatingCost> costs =
+                    operatingCostRepository.findByCinema_IdOrderByEffectiveFromAsc(cinema.getId());
+            List<OperatingCostDetailResponse> details = new ArrayList<>();
+            BigDecimal totalCost = BigDecimal.ZERO;
+
+            for (int i = 0; i < costs.size(); i++) {
+                OperatingCost cost = costs.get(i);
+                LocalDate end = (i + 1 < costs.size())
+                        ? costs.get(i + 1).getEffectiveFrom()
+                        : today;
+                long activeDays = ChronoUnit.DAYS.between(cost.getEffectiveFrom(), end);
+                BigDecimal periodCost = cost.getDailyCost().multiply(BigDecimal.valueOf(activeDays));
+                totalCost = totalCost.add(periodCost);
+                details.add(new OperatingCostDetailResponse(
+                        cost.getDailyCost(), cost.getEffectiveFrom(), activeDays, periodCost));
+            }
+
+            return new CinemaOperatingCostSummaryResponse(
+                    cinema.getId(), cinema.getName(), details, totalCost);
+        }).collect(java.util.stream.Collectors.toList());
     }
 }

@@ -1,6 +1,7 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateWalletTransactionRequest;
+import com.example.cinema.dtos.cinema.response.RechargeResponse;
 import com.example.cinema.dtos.cinema.response.WalletTransactionResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
@@ -49,15 +50,20 @@ public class WalletTransactionServiceImplTest {
                 new CreateWalletTransactionRequest(ADMIN_ID, new BigDecimal("100.00"), "Recarga de prueba");
 
         CinemaWallet wallet = buildWallet(new BigDecimal("50.00"));
+        LocalDateTime now = LocalDateTime.now();
         ArgumentCaptor<WalletTransaction> txCaptor    = ArgumentCaptor.forClass(WalletTransaction.class);
         ArgumentCaptor<CinemaWallet>      walletCaptor = ArgumentCaptor.forClass(CinemaWallet.class);
 
         when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(buildCinema()));
         when(cinemaWalletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.of(wallet));
-        when(walletTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(walletTransactionRepository.save(any())).thenAnswer(inv -> {
+            WalletTransaction tx = inv.getArgument(0);
+            tx.setTransactionDate(now);
+            return tx;
+        });
         when(cinemaWalletRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        walletTransactionService.createRecharge(request);
+        RechargeResponse result = walletTransactionService.createRecharge(request);
 
         verify(walletTransactionRepository).save(txCaptor.capture());
         verify(cinemaWalletRepository).save(walletCaptor.capture());
@@ -72,6 +78,11 @@ public class WalletTransactionServiceImplTest {
 
         CinemaWallet updatedWallet = walletCaptor.getValue();
         assertEquals(new BigDecimal("150.00"), updatedWallet.getBalance());
+
+        assertAll(
+                () -> assertEquals(new BigDecimal("150.00"), result.getNewBalance()),
+                () -> assertEquals(now, result.getTransactionDate())
+        );
     }
 
     @Test
@@ -86,11 +97,14 @@ public class WalletTransactionServiceImplTest {
         when(walletTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(cinemaWalletRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        walletTransactionService.createRecharge(request);
+        RechargeResponse result = walletTransactionService.createRecharge(request);
 
         ArgumentCaptor<WalletTransaction> txCaptor = ArgumentCaptor.forClass(WalletTransaction.class);
         verify(walletTransactionRepository).save(txCaptor.capture());
-        assertNull(txCaptor.getValue().getDescription());
+        assertAll(
+                () -> assertNull(txCaptor.getValue().getDescription()),
+                () -> assertEquals(new BigDecimal("200.00"), result.getNewBalance())
+        );
     }
 
     @Test

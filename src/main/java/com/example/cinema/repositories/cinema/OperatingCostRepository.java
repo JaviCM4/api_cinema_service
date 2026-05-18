@@ -14,6 +14,8 @@ public interface OperatingCostRepository extends JpaRepository<OperatingCost, UU
 
     List<OperatingCost> findByCinema_IdOrderByEffectiveFromDesc(UUID cinemaId);
 
+    List<OperatingCost> findByCinema_IdOrderByEffectiveFromAsc(UUID cinemaId);
+
     Optional<OperatingCost> findFirstByCinema_IdAndEffectiveFromLessThanEqualOrderByEffectiveFromDesc(
             UUID cinemaId, LocalDate date);
 

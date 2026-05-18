@@ -1,6 +1,7 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateWalletTransactionRequest;
+import com.example.cinema.dtos.cinema.response.RechargeResponse;
 import com.example.cinema.dtos.cinema.response.WalletTransactionResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
@@ -34,7 +35,7 @@ public class WalletTransactionServiceImplementation implements WalletTransaction
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createRecharge(CreateWalletTransactionRequest dto)
+    public RechargeResponse createRecharge(CreateWalletTransactionRequest dto)
             throws ResourceNotFoundException {
         Cinema cinema = cinemaRepository.findByAdminCinemaId(dto.getAdminCinemaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cinema not found"));
@@ -42,9 +43,11 @@ public class WalletTransactionServiceImplementation implements WalletTransaction
         CinemaWallet wallet = cinemaWalletRepository.findByCinema_Id(cinema.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cartera Digital no encontrada para el cine con id: " + cinema.getName()));
 
-        walletTransactionRepository.save(dto.createEntity(wallet));
+        WalletTransaction savedTx = walletTransactionRepository.save(dto.createEntity(wallet));
         wallet.setBalance(wallet.getBalance().add(dto.getAmount()));
         cinemaWalletRepository.save(wallet);
+
+        return new RechargeResponse(wallet.getBalance(), savedTx.getTransactionDate());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.cinema.controllers;
 
 import com.example.cinema.dtos.cinema.request.CreateWalletTransactionRequest;
+import com.example.cinema.dtos.cinema.response.RechargeResponse;
 import com.example.cinema.dtos.cinema.response.WalletTransactionResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.WalletTransactionService;
@@ -25,10 +26,9 @@ public class WalletTransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createRecharge(@Valid @RequestBody CreateWalletTransactionRequest dto)
+    public ResponseEntity<RechargeResponse> createRecharge(@Valid @RequestBody CreateWalletTransactionRequest dto)
             throws ResourceNotFoundException {
-        walletTransactionService.createRecharge(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(walletTransactionService.createRecharge(dto));
     }
 
     @GetMapping("/{adminCinemaId}")
