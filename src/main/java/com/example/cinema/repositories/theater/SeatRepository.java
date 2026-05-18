@@ -11,7 +11,7 @@ import java.util.UUID;
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, UUID> {
 
-    List<Seat> findByTheater_Id(UUID theaterId);
+    List<Seat> findByTheater_IdOrderByRowNameAscColNumberAsc(UUID theaterId);
 
     List<Seat> findByTheater_IdAndIsActiveTrue(UUID theaterId);
 

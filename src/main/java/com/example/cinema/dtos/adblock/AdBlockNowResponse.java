@@ -12,7 +12,10 @@ public class AdBlockNowResponse {
     LocalDate blockEndDate;
 
      public static AdBlockNowResponse blocked(boolean blocked, LocalDate blockEndDate) {
-        return new AdBlockNowResponse(blocked, "La publicidad del cine está bloqueada hasta el " + blockEndDate.toString(), blockEndDate);
+        String message = blocked
+                ? "La publicidad del cine está bloqueada hasta el " + blockEndDate
+                : "La publicidad del cine no está bloqueada actualmente";
+        return new AdBlockNowResponse(blocked, message, blockEndDate);
     }
 
 }

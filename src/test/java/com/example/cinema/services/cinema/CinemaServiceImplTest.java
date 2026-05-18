@@ -147,6 +147,30 @@ public class CinemaServiceImplTest {
     }
 
     @Test
+    void testUpdateCinemaTrimsWhitespace() throws Exception {
+        // Arrange — los campos con espacios deben guardarse sin espacios extremos
+        UpdateCinemaRequest request = new UpdateCinemaRequest(
+                "  Cinepolis Norte  ", "  Av. Principal 5  ", "  +573009876543  ", "  NORTE@mail.com  ");
+
+        ArgumentCaptor<Cinema> captor = ArgumentCaptor.forClass(Cinema.class);
+        Cinema existing = buildCinema("Cinepolis Centro");
+
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(existing));
+
+        // Act
+        cinemaService.updateCinema(CINEMA_ID, request);
+
+        // Assert
+        assertAll(
+                () -> verify(cinemaRepository).save(captor.capture()),
+                () -> assertEquals("Cinepolis Norte",   captor.getValue().getName()),
+                () -> assertEquals("Av. Principal 5",   captor.getValue().getAddress()),
+                () -> assertEquals("+573009876543",     captor.getValue().getPhone()),
+                () -> assertEquals("norte@mail.com",    captor.getValue().getEmail())
+        );
+    }
+
+    @Test
     void testUpdateCinemaOnlyNonNullFields() throws Exception {
         // Arrange
         UpdateCinemaRequest request = new UpdateCinemaRequest("Cinepolis Norte", null, null, null);

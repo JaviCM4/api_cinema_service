@@ -91,6 +91,25 @@ public class ShowtimeServiceImplTest {
     }
 
     @Test
+    void testCreateShowtimeOverlap() {
+        // Arrange
+        LocalDate date  = LocalDate.now().plusDays(1);
+        LocalTime start = LocalTime.of(14, 0);
+        LocalTime end   = LocalTime.of(16, 0);
+        CreateShowtimeRequest request = new CreateShowtimeRequest(THEATER_ID, MOVIE_ID, VersionType.ORIGINAL, date, start, end);
+
+        when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(buildTheater()));
+        when(showtimeRepository.existsOverlap(any(), any(), any(), any(), any())).thenReturn(true);
+
+        // Act & Assert
+        assertAll(
+                () -> assertThrows(ConflictException.class,
+                        () -> showtimeService.createShowtime(request)),
+                () -> verify(showtimeRepository, never()).save(any())
+        );
+    }
+
+    @Test
     void testUpdateShowtime() throws Exception {
         // Arrange
         UUID newMovieId = UUID.randomUUID();
@@ -171,6 +190,27 @@ public class ShowtimeServiceImplTest {
         // Act & Assert
         assertAll(
                 () -> assertThrows(ResourceNotFoundException.class,
+                        () -> showtimeService.updateShowtime(SHOWTIME_ID, request)),
+                () -> verify(showtimeRepository, never()).save(any())
+        );
+    }
+
+    @Test
+    void testUpdateShowtimeOverlap() {
+        // Arrange
+        LocalDate date  = LocalDate.now().plusDays(3);
+        LocalTime start = LocalTime.of(14, 0);
+        LocalTime end   = LocalTime.of(16, 0);
+        UpdateShowtimeRequest request = new UpdateShowtimeRequest(MOVIE_ID, VersionType.ORIGINAL, date, start, end);
+
+        Showtime existing = buildShowtime(LocalDate.now().plusDays(2), LocalTime.of(10, 0), LocalTime.of(12, 0));
+
+        when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.of(existing));
+        when(showtimeRepository.existsOverlap(any(), any(), any(), any(), any())).thenReturn(true);
+
+        // Act & Assert
+        assertAll(
+                () -> assertThrows(ConflictException.class,
                         () -> showtimeService.updateShowtime(SHOWTIME_ID, request)),
                 () -> verify(showtimeRepository, never()).save(any())
         );
