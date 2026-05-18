@@ -125,6 +125,28 @@ public class AdBlockServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> service.createAdBlock(CINEMA_ID, request()));
     }
 
+    @Test
+    void createAdBlock_WithExistingBlock_StartsAfterPreviousEnd() throws Exception {
+        LocalDate previousEnd = LocalDate.now().plusDays(2);
+        AdBlock previousBlock = adBlock(previousEnd.minusDays(DAYS_BLOCKED - 1), previousEnd);
+
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(cinema()));
+        when(adBlockRepository.findByCinema_IdOrderByStartDateDesc(CINEMA_ID))
+                .thenReturn(List.of(previousBlock));
+        when(adBlockPricingRepository.findByCinemaId(CINEMA_ID)).thenReturn(Optional.of(pricing()));
+        when(walletRepository.getBalanceByCinemaId(CINEMA_ID)).thenReturn(AMOUNT_TO_PAY);
+        when(walletRepository.findByCinema_Id(CINEMA_ID)).thenReturn(Optional.of(wallet(AMOUNT_TO_PAY)));
+        when(adBlockRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(walletTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(walletRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AdBlockResponse response = service.createAdBlock(CINEMA_ID, request());
+
+        assertNotNull(response);
+        assertEquals(previousEnd.plusDays(1).toString(), response.getStartDate());
+        assertEquals(previousEnd.plusDays(DAYS_BLOCKED).toString(), response.getEndDate());
+    }
+
     // ------------------- getAdBlocksByCinemaId -------------------
     @Test
     void getAdBlocksByCinemaId_ReturnsList() throws Exception {
@@ -166,13 +188,14 @@ public class AdBlockServiceImplTest {
 
     // ------------------- getCurrentAdBlockStatus -------------------
     @Test
-    void getCurrentAdBlockStatus_Blocked() throws Exception {
-        LocalDate today = LocalDate.now();
-        AdBlock ab = adBlock(today, today.plusDays(DAYS_BLOCKED - 1));
-        when(adBlockRepository.findActiveByCinemaIdAndDate(CINEMA_ID, today)).thenReturn(List.of(ab));
+    void getCurrentAdBlockStatus_NotBlocked() throws Exception {
+        when(adBlockRepository.findActiveByCinemaIdAndDate(CINEMA_ID, LocalDate.now()))
+                .thenReturn(Collections.emptyList());
+
         AdBlockNowResponse response = service.getCurrentAdBlockStatus(CINEMA_ID);
-        assertTrue(response.isBlocked());
-        assertEquals(ab.getEndDate(), response.getBlockEndDate());
+
+        assertFalse(response.isBlocked());
+        assertNull(response.getBlockEndDate());
     }
 
 
