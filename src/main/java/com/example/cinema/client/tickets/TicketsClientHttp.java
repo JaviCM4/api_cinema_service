@@ -21,7 +21,7 @@ public class TicketsClientHttp implements TicketsClient {
     @Override
     public boolean hasTicketsByShowtime(UUID showtimeId) {
         Boolean result = restClient.get()
-                .uri(ticketsServiceUrl + "/api/v1/tickets/internal/has-tickets/showtime/{showtimeId}", showtimeId)
+                .uri(ticketsServiceUrl + "/tickets/internal/has-tickets/showtime/{showtimeId}", showtimeId)
                 .retrieve()
                 .body(Boolean.class);
         return Boolean.TRUE.equals(result);
@@ -30,7 +30,7 @@ public class TicketsClientHttp implements TicketsClient {
     @Override
     public boolean hasTicketsByRoomAndUser(UUID roomId, UUID userId) {
         Boolean result = restClient.get()
-                .uri(ticketsServiceUrl + "/api/v1/tickets/internal/has-tickets/room/{roomId}/user?userId={userId}", roomId, userId)
+                .uri(ticketsServiceUrl + "/tickets/internal/has-tickets/room/{roomId}/user?userId={userId}", roomId, userId)
                 .retrieve()
                 .body(Boolean.class);
         return Boolean.TRUE.equals(result);
