@@ -1,5 +1,6 @@
 package com.example.cinema.services.room;
 
+import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.room.request.CreateRatingRequest;
 import com.example.cinema.dtos.room.request.UpdateRatingRequest;
 import com.example.cinema.dtos.room.response.RatingResponse;
@@ -28,12 +29,14 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
     private final RoomRatingRepository ratingRepository;
     private final TheaterRepository theaterRepository;
     private final CinemaEventProducer eventProducer;
+    private final TicketsClient ticketsClient;
 
     @Autowired
-    public RoomRatingServiceImplementation(RoomRatingRepository ratingRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer) {
+    public RoomRatingServiceImplementation(RoomRatingRepository ratingRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer, TicketsClient ticketsClient) {
         this.ratingRepository = ratingRepository;
         this.theaterRepository = theaterRepository;
         this.eventProducer = eventProducer;
+        this.ticketsClient = ticketsClient;
     }
 
     @Override
@@ -49,6 +52,11 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
 
         if (ratingRepository.findByTheater_IdAndUserId(theaterId, dto.getUserId()).isPresent()) {
             throw new ConflictException("El usuario ya califico esta sala");
+        }
+
+        //Verificar que el usuario tenga tickets para esa sala
+        if (!ticketsClient.hasTicketsByRoomAndUser(theaterId, dto.getUserId())) {
+            throw new RestrictedException("Debes haber comprado al menos un boleto en esta sala para calificarla");
         }
 
         RoomRating rating = dto.createEntity();

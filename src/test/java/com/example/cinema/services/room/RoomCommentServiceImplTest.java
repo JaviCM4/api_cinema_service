@@ -1,5 +1,6 @@
 package com.example.cinema.services.room;
 
+import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
@@ -38,6 +39,7 @@ public class RoomCommentServiceImplTest {
     @Mock private RoomCommentRepository commentRepository;
     @Mock private TheaterRepository theaterRepository;
     @Mock private CinemaEventProducer eventProducer;
+    @Mock private TicketsClient ticketsClient;
 
     @InjectMocks
     private RoomCommentServiceImplementation commentService;
@@ -52,6 +54,7 @@ public class RoomCommentServiceImplTest {
         ArgumentCaptor<RoomComment> captor = ArgumentCaptor.forClass(RoomComment.class);
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(theater));
+        when(ticketsClient.hasTicketsByRoomAndUser(THEATER_ID, USER_ID)).thenReturn(true);
         when(commentRepository.save(any(RoomComment.class))).thenReturn(saved);
 
         // Act
@@ -85,6 +88,19 @@ public class RoomCommentServiceImplTest {
         // Arrange
         CreateCommentRequest request = new CreateCommentRequest(USER_ID, "Excelente sala");
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(buildTheater(false)));
+
+        // Assert
+        assertThrows(RestrictedException.class,
+                () -> commentService.createComment(THEATER_ID, request));
+        verify(commentRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateCommentWhenUserHasNoTickets() {
+        // Arrange
+        CreateCommentRequest request = new CreateCommentRequest(USER_ID, "Excelente sala");
+        when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(buildTheater(true)));
+        when(ticketsClient.hasTicketsByRoomAndUser(THEATER_ID, USER_ID)).thenReturn(false);
 
         // Assert
         assertThrows(RestrictedException.class,

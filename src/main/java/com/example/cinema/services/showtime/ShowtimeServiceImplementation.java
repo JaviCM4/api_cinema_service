@@ -1,5 +1,6 @@
 package com.example.cinema.services.showtime;
 
+import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.showtime.request.CreateShowtimeRequest;
 import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
 import com.example.cinema.dtos.showtime.response.ShowtimeByTheaterResponse;
@@ -33,12 +34,14 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
     private final ShowtimeRepository showtimeRepository;
     private final TheaterRepository theaterRepository;
     private final CinemaEventProducer eventProducer;
+    private final TicketsClient ticketsClient;
 
     @Autowired
-    public ShowtimeServiceImplementation(ShowtimeRepository showtimeRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer) {
+    public ShowtimeServiceImplementation(ShowtimeRepository showtimeRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer, TicketsClient ticketsClient) {
         this.showtimeRepository = showtimeRepository;
         this.theaterRepository = theaterRepository;
         this.eventProducer = eventProducer;
+        this.ticketsClient = ticketsClient;
     }
 
     @Override
@@ -66,11 +69,18 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Función no encontrada con id: " + showtimeId));
 
+
         showtime.setMovieId(dto.getMovieId());
         showtime.setDateShowtime(dto.getDateShowtime());
         showtime.setStartShowtime(dto.getStartShowtime());
         showtime.setEndShowtime(dto.getEndShowtime());
         showtime.setVersionType(dto.getVersionType());
+
+        //Verificar que la función no tenga tickets vendidos
+        if (ticketsClient.hasTicketsByShowtime(showtimeId)) {
+            throw new ConflictException("No se puede modificar la función porque ya tiene tickets vendidos");
+        }
+        
 
         LocalTime start = showtime.getStartShowtime();
         LocalTime end = showtime.getEndShowtime();
