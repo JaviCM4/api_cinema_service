@@ -1,5 +1,6 @@
 package com.example.cinema.services.showtime;
 
+import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.showtime.request.CreateShowtimeRequest;
 import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
 import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
@@ -43,6 +44,7 @@ public class ShowtimeServiceImplTest {
     @Mock private TheaterRepository theaterRepository;
     @Mock private VersionTypeRepository versionTypeRepository;
     @Mock private CinemaEventProducer eventProducer;
+    @Mock private TicketsClient ticketsClient;
 
     @InjectMocks
     private ShowtimeServiceImplementation showtimeService;
@@ -130,6 +132,7 @@ public class ShowtimeServiceImplTest {
         ArgumentCaptor<Showtime> captor = ArgumentCaptor.forClass(Showtime.class);
 
         when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.of(existing));
+        when(ticketsClient.hasTicketsByShowtime(SHOWTIME_ID)).thenReturn(false);
         when(versionTypeRepository.findById(newVersionTypeId)).thenReturn(Optional.of(newVType));
 
         // Act
@@ -148,6 +151,24 @@ public class ShowtimeServiceImplTest {
     }
 
     @Test
+    void testUpdateShowtimeHasTicketsConflict() {
+        // Arrange
+        UpdateShowtimeRequest request = new UpdateShowtimeRequest(null, null, null, null, null);
+
+        Showtime existing = buildShowtime(LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
+
+        when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.of(existing));
+        when(ticketsClient.hasTicketsByShowtime(SHOWTIME_ID)).thenReturn(true);
+
+        // Act & Assert
+        assertAll(
+                () -> assertThrows(ConflictException.class,
+                        () -> showtimeService.updateShowtime(SHOWTIME_ID, request)),
+                () -> verify(showtimeRepository, never()).save(any())
+        );
+    }
+
+    @Test
     void testUpdateShowtimeOnlyMovieId() throws Exception {
         // Arrange
         UUID newMovieId = UUID.randomUUID();
@@ -157,6 +178,7 @@ public class ShowtimeServiceImplTest {
         ArgumentCaptor<Showtime> captor = ArgumentCaptor.forClass(Showtime.class);
 
         when(showtimeRepository.findById(SHOWTIME_ID)).thenReturn(Optional.of(existing));
+        when(ticketsClient.hasTicketsByShowtime(SHOWTIME_ID)).thenReturn(false);
 
         // Act
         showtimeService.updateShowtime(SHOWTIME_ID, request);

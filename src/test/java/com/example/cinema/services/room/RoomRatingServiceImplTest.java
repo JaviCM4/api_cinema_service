@@ -1,5 +1,6 @@
 package com.example.cinema.services.room;
 
+import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.room.request.CreateRatingRequest;
 import com.example.cinema.dtos.room.request.UpdateRatingRequest;
 import com.example.cinema.dtos.room.response.RatingSummaryResponse;
@@ -38,6 +39,7 @@ public class RoomRatingServiceImplTest {
     @Mock private RoomRatingRepository ratingRepository;
     @Mock private TheaterRepository theaterRepository;
     @Mock private CinemaEventProducer eventProducer;
+    @Mock private TicketsClient ticketsClient;
 
     @InjectMocks
     private RoomRatingServiceImplementation ratingService;
@@ -53,6 +55,7 @@ public class RoomRatingServiceImplTest {
 
         when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(theater));
         when(ratingRepository.findByTheater_IdAndUserId(THEATER_ID, USER_ID)).thenReturn(Optional.empty());
+        when(ticketsClient.hasTicketsByRoomAndUser(THEATER_ID, USER_ID)).thenReturn(true);
         when(ratingRepository.save(any(RoomRating.class))).thenReturn(saved);
 
         // Act
@@ -66,6 +69,22 @@ public class RoomRatingServiceImplTest {
                 () -> assertEquals((short) 4, captor.getValue().getScore()),
                 () -> verify(eventProducer).publishRoomRatingCreated(any())
         );
+    }
+
+    @Test
+    void testCreateRatingNoTickets() {
+        // Arrange
+        CreateRatingRequest request = new CreateRatingRequest(USER_ID, (short) 4);
+        Theater theater = buildTheater(true);
+
+        when(theaterRepository.findById(THEATER_ID)).thenReturn(Optional.of(theater));
+        when(ratingRepository.findByTheater_IdAndUserId(THEATER_ID, USER_ID)).thenReturn(Optional.empty());
+        when(ticketsClient.hasTicketsByRoomAndUser(THEATER_ID, USER_ID)).thenReturn(false);
+
+        // Assert
+        assertThrows(RestrictedException.class,
+                () -> ratingService.createRating(THEATER_ID, request));
+        verify(ratingRepository, never()).save(any());
     }
 
     @Test

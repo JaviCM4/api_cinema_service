@@ -1,5 +1,6 @@
 package com.example.cinema.services.showtime;
 
+import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.showtime.request.CreateShowtimeRequest;
 import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
 import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
@@ -34,13 +35,15 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
     private final TheaterRepository theaterRepository;
     private final VersionTypeRepository versionTypeRepository;
     private final CinemaEventProducer eventProducer;
+    private final TicketsClient ticketsClient;
 
     @Autowired
-    public ShowtimeServiceImplementation(ShowtimeRepository showtimeRepository, TheaterRepository theaterRepository, VersionTypeRepository versionTypeRepository, CinemaEventProducer eventProducer) {
+    public ShowtimeServiceImplementation(ShowtimeRepository showtimeRepository, TheaterRepository theaterRepository, VersionTypeRepository versionTypeRepository, CinemaEventProducer eventProducer, TicketsClient ticketsClient) {
         this.showtimeRepository = showtimeRepository;
         this.theaterRepository = theaterRepository;
         this.versionTypeRepository = versionTypeRepository;
         this.eventProducer = eventProducer;
+        this.ticketsClient = ticketsClient;
     }
 
     @Override
@@ -65,6 +68,11 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
             throws ResourceNotFoundException, ConflictException {
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Función no encontrada con id: " + showtimeId));
+
+        //Verificar que la función no tenga tickets vendidos
+        if (ticketsClient.hasTicketsByShowtime(showtimeId)) {
+            throw new ConflictException("No se puede modificar la función porque ya tiene tickets vendidos");
+        }
 
         if (dto.getMovieId() != null)  showtime.setMovieId(dto.getMovieId());
         if (dto.getDateShowtime() != null) showtime.setDateShowtime(dto.getDateShowtime());
