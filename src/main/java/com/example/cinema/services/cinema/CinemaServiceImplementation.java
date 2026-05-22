@@ -4,6 +4,7 @@ import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
+import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -70,6 +72,21 @@ public class CinemaServiceImplementation implements CinemaService {
         if (dto.getPhone() != null) cinema.setPhone(dto.getPhone().trim());
         if (dto.getEmail() != null) cinema.setEmail(dto.getEmail().trim().toLowerCase());
 
+        cinemaRepository.save(cinema);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void assignCinemaAdmin(UUID cinemaId, UUID adminCinemaId) throws ResourceNotFoundException, ConflictException {
+        Cinema cinema = cinemaRepository.findById(cinemaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cine no encontrado con id: " + cinemaId));
+
+        Optional<Cinema> assigned = cinemaRepository.findByAdminCinemaId(adminCinemaId);
+        if (assigned.isPresent() && !assigned.get().getId().equals(cinemaId)) {
+            throw new ConflictException("El administrador ya esta asignado a otro cine");
+        }
+
+        cinema.setAdminCinemaId(adminCinemaId);
         cinemaRepository.save(cinema);
     }
 

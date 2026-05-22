@@ -1,9 +1,11 @@
 package com.example.cinema.controllers;
 
+import com.example.cinema.dtos.cinema.request.AssignCinemaAdminRequest;
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
+import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.CinemaService;
 import jakarta.validation.Valid;
@@ -48,6 +50,15 @@ public class CinemaController {
     public ResponseEntity<Void> updateCinema(@PathVariable UUID cinemaId, @Valid @RequestBody UpdateCinemaRequest request)
             throws ResourceNotFoundException {
         cinemaService.updateCinema(cinemaId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{cinemaId}/admin")
+    public ResponseEntity<Void> assignCinemaAdmin(
+            @PathVariable UUID cinemaId,
+            @Valid @RequestBody AssignCinemaAdminRequest request
+    ) throws ResourceNotFoundException, ConflictException {
+        cinemaService.assignCinemaAdmin(cinemaId, request.getAdminCinemaId());
         return ResponseEntity.noContent().build();
     }
 }
