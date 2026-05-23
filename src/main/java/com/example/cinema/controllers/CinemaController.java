@@ -56,7 +56,7 @@ public class CinemaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cinemaService.createCompany(request));
     }
 
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
+    //@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
     @GetMapping("/admin/{adminCinemaId}")
     public ResponseEntity<CinemaResponse> getCinemaByAdmin(@PathVariable UUID adminCinemaId)
             throws ResourceNotFoundException {
@@ -79,7 +79,7 @@ public class CinemaController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    //@PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @PatchMapping("/{cinemaId}/admin")
     public ResponseEntity<Void> assignCinemaAdmin(
             @PathVariable UUID cinemaId,

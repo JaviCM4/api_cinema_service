@@ -17,7 +17,7 @@ public class CinemaEventConsumer {
         this.cinemaRepository = cinemaRepository;
         this.objectMapper = objectMapper;
     }
-
+/*
     @KafkaListener(topics = USER_EVENTS_TOPIC, groupId = "cinema-service-group")
     public void onAdvertiserCreated(String payload) throws JsonProcessingException {
         CinemaCreatedEvent event = objectMapper.readValue(payload, CinemaCreatedEvent.class);
@@ -25,5 +25,5 @@ public class CinemaEventConsumer {
             cinemaRepository.save(event.fromEvent());
         }
     }
-
+*/
 }
