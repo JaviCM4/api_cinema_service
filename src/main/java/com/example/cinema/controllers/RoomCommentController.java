@@ -9,6 +9,7 @@ import com.example.cinema.exceptions.RestrictedException;
 import com.example.cinema.services.room.inteface.RoomCommentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +27,14 @@ public class RoomCommentController {
         this.commentService = commentService;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/v1/theaters/{theaterId}/comments")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable UUID theaterId)
             throws ResourceNotFoundException {
         return ResponseEntity.ok(commentService.findCommentsByTheater(theaterId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/v1/theaters/{theaterId}/comments")
     public ResponseEntity<Void> createComment(@PathVariable UUID theaterId, @Valid @RequestBody CreateCommentRequest request)
             throws ResourceNotFoundException, RestrictedException {
@@ -39,6 +42,7 @@ public class RoomCommentController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/v1/comments/{commentId}")
     public ResponseEntity<Void> updateComment(@PathVariable UUID commentId, @Valid @RequestBody UpdateCommentRequest request)
             throws ResourceNotFoundException, ConflictException {
@@ -46,6 +50,7 @@ public class RoomCommentController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/v1/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId, @RequestParam UUID userId)
             throws ResourceNotFoundException, ConflictException {

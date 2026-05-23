@@ -9,6 +9,7 @@ import com.example.cinema.models.theater.VersionType;
 import com.example.cinema.services.showtime.inteface.ShowtimeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ public class ShowtimeController {
         this.showtimeService = showtimeService;
     }
 
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
     @PostMapping
     public ResponseEntity<Void> createShowtime(@Valid @RequestBody CreateShowtimeRequest request)
             throws ResourceNotFoundException, ConflictException {
@@ -34,6 +36,7 @@ public class ShowtimeController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
     @PatchMapping("/{showtimeId}")
     public ResponseEntity<Void> updateShowtime(@PathVariable UUID showtimeId, @Valid @RequestBody UpdateShowtimeRequest request)
             throws ResourceNotFoundException, ConflictException {

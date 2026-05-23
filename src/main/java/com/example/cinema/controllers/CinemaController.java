@@ -12,6 +12,7 @@ import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.CinemaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,28 +37,33 @@ public class CinemaController {
         this.cinemaService = cinemaService;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     public ResponseEntity<List<CinemaSummaryResponse>> getAllCinemas() {
         return ResponseEntity.ok(cinemaService.findAll());
     }
 
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @GetMapping("/companies")
     public ResponseEntity<List<CompanyResponse>> getCompanies() {
         return ResponseEntity.ok(cinemaService.listCompanies());
     }
 
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @PostMapping("/companies")
     public ResponseEntity<CompanyResponse> createCompany(@Valid @RequestBody CreateCompanyRequest request)
             throws ConflictException {
         return ResponseEntity.status(HttpStatus.CREATED).body(cinemaService.createCompany(request));
     }
 
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
     @GetMapping("/admin/{adminCinemaId}")
     public ResponseEntity<CinemaResponse> getCinemaByAdmin(@PathVariable UUID adminCinemaId)
             throws ResourceNotFoundException {
         return ResponseEntity.ok(cinemaService.getByAdminCinemaId(adminCinemaId));
     }
 
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @PostMapping
     public ResponseEntity<Void> createCinema(@Valid @RequestBody CreateCinemaRequest request)
             throws ResourceNotFoundException, ConflictException {
@@ -65,6 +71,7 @@ public class CinemaController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
     @PatchMapping("/{cinemaId}")
     public ResponseEntity<Void> updateCinema(@PathVariable UUID cinemaId, @Valid @RequestBody UpdateCinemaRequest request)
             throws ResourceNotFoundException {
@@ -72,6 +79,7 @@ public class CinemaController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @PatchMapping("/{cinemaId}/admin")
     public ResponseEntity<Void> assignCinemaAdmin(
             @PathVariable UUID cinemaId,

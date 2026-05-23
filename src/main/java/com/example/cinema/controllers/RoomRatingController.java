@@ -9,6 +9,7 @@ import com.example.cinema.exceptions.RestrictedException;
 import com.example.cinema.services.room.inteface.RoomRatingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +26,14 @@ public class RoomRatingController {
         this.ratingService = ratingService;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/v1/theaters/{theaterId}/ratings")
     public ResponseEntity<RatingSummaryResponse> getRatings(@PathVariable UUID theaterId)
             throws ResourceNotFoundException {
         return ResponseEntity.ok(ratingService.findRatingsByTheater(theaterId));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/v1/theaters/{theaterId}/ratings")
     public ResponseEntity<Void> createRating(@PathVariable UUID theaterId, @Valid @RequestBody CreateRatingRequest request)
             throws ResourceNotFoundException, RestrictedException, ConflictException {
@@ -38,6 +41,7 @@ public class RoomRatingController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/v1/ratings/{ratingId}")
     public ResponseEntity<Void> updateRating(@PathVariable UUID ratingId, @Valid @RequestBody UpdateRatingRequest request)
             throws ResourceNotFoundException, ConflictException {
