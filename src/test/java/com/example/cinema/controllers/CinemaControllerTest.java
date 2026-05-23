@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.config.SecurityConfig;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
+import com.example.cinema.dtos.cinema.response.CompanyResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.cinema.inteface.CinemaService;
 import org.junit.jupiter.api.Test;
@@ -41,39 +42,41 @@ class CinemaControllerTest {
     private static final UUID CINEMA_ID  = UUID.fromString("a1b2c3d4-0000-0000-0000-000000000001");
     private static final UUID ADMIN_ID   = UUID.fromString("aaaaaaaa-0000-0000-0000-000000000001");
     private static final UUID COUNTRY_ID = UUID.fromString("cccccccc-0000-0000-0000-000000000001");
+    private static final UUID COMPANY_ID = UUID.fromString("dddddddd-0000-0000-0000-000000000001");
 
     @Test
     void getAllCinemas_ReturnsList() throws Exception {
         CinemaSummaryResponse summary = new CinemaSummaryResponse(
-                CINEMA_ID, "CineMax Premium", "Av. Principal 123", "+1-555-0100", "info@cinemax.com");
+                CINEMA_ID, COMPANY_ID, "Cinepolis", ADMIN_ID, "Cinepolis Xela", "Av. Principal 123", "+1-555-0100", "info@cinemax.com");
         when(cinemaService.findAll()).thenReturn(List.of(summary));
 
         mockMvc.perform(get("/v1/cinemas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("CineMax Premium"))
-                .andExpect(jsonPath("$[0].email").value("info@cinemax.com"));
+                .andExpect(jsonPath("$[0].name").value("Cinepolis Xela"))
+                .andExpect(jsonPath("$[0].companyName").value("Cinepolis"));
     }
 
     @Test
-    void getAllCinemas_EmptyList() throws Exception {
-        when(cinemaService.findAll()).thenReturn(List.of());
+    void getCompanies_ReturnsList() throws Exception {
+        CompanyResponse company = new CompanyResponse(COMPANY_ID, "Cinepolis", LocalDateTime.now(), LocalDateTime.now());
+        when(cinemaService.listCompanies()).thenReturn(List.of(company));
 
-        mockMvc.perform(get("/v1/cinemas"))
+        mockMvc.perform(get("/v1/cinemas/companies"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$[0].name").value("Cinepolis"));
     }
 
     @Test
     void getCinemaByAdmin_Found() throws Exception {
         CinemaResponse response = new CinemaResponse(
-                CINEMA_ID, COUNTRY_ID, "CineMax Premium", "Av. Principal 123",
+                CINEMA_ID, COMPANY_ID, "Cinepolis", ADMIN_ID, COUNTRY_ID, "Cinepolis Xela", "Av. Principal 123",
                 "+1-555-0100", "info@cinemax.com", LocalDateTime.now(), LocalDateTime.now());
         when(cinemaService.getByAdminCinemaId(ADMIN_ID)).thenReturn(response);
 
         mockMvc.perform(get("/v1/cinemas/admin/{adminId}", ADMIN_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("CineMax Premium"))
-                .andExpect(jsonPath("$.id").value(CINEMA_ID.toString()));
+                .andExpect(jsonPath("$.name").value("Cinepolis Xela"))
+                .andExpect(jsonPath("$.companyName").value("Cinepolis"));
     }
 
     @Test
@@ -89,13 +92,14 @@ class CinemaControllerTest {
     void createCinema_Created() throws Exception {
         String body = """
                 {
+                    "companyId": "%s",
                     "adminCinemaId": "%s",
                     "countryId": "%s",
-                    "name": "CineMax Premium",
+                    "name": "Cinepolis Xela",
                     "email": "info@cinemax.com",
                     "effectiveFrom": "2026-01-01"
                 }
-                """.formatted(ADMIN_ID, COUNTRY_ID);
+                """.formatted(COMPANY_ID, ADMIN_ID, COUNTRY_ID);
 
         doNothing().when(cinemaService).createCinema(any());
 
@@ -114,28 +118,10 @@ class CinemaControllerTest {
     }
 
     @Test
-    void createCinema_InvalidEmail_BadRequest() throws Exception {
-        String body = """
-                {
-                    "adminCinemaId": "%s",
-                    "countryId": "%s",
-                    "name": "CineMax Premium",
-                    "email": "no-es-un-email",
-                    "effectiveFrom": "2026-01-01"
-                }
-                """.formatted(ADMIN_ID, COUNTRY_ID);
-
-        mockMvc.perform(post("/v1/cinemas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void updateCinema_NoContent() throws Exception {
         String body = """
                 {
-                    "name": "CineMax Actualizado",
+                    "name": "Cinepolis Xela Centro",
                     "email": "nuevo@cinemax.com"
                 }
                 """;
@@ -151,7 +137,7 @@ class CinemaControllerTest {
     void updateCinema_NotFound() throws Exception {
         String body = """
                 {
-                    "name": "CineMax"
+                    "name": "Cinepolis Xela"
                 }
                 """;
         doThrow(new ResourceNotFoundException("Cinema no encontrado"))

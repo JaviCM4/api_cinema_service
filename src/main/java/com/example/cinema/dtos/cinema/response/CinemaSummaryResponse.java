@@ -9,6 +9,9 @@ import java.util.UUID;
 public class CinemaSummaryResponse {
 
     UUID id;
+    UUID companyId;
+    String companyName;
+    UUID adminCinemaId;
     String name;
     String address;
     String phone;
@@ -17,6 +20,9 @@ public class CinemaSummaryResponse {
     public static CinemaSummaryResponse from(Cinema cinema) {
         return new CinemaSummaryResponse(
                 cinema.getId(),
+                cinema.getCompany().getId(),
+                cinema.getCompany().getName(),
+                cinema.getAdminCinemaId(),
                 cinema.getName(),
                 cinema.getAddress(),
                 cinema.getPhone(),

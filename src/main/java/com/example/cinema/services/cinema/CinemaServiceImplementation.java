@@ -1,17 +1,21 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
+import com.example.cinema.dtos.cinema.request.CreateCompanyRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
+import com.example.cinema.dtos.cinema.response.CompanyResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
+import com.example.cinema.models.cinema.Company;
 import com.example.cinema.models.cinema.GlobalCost;
 import com.example.cinema.models.cinema.OperatingCost;
 import com.example.cinema.repositories.cinema.CinemaRepository;
 import com.example.cinema.repositories.cinema.CinemaWalletRepository;
+import com.example.cinema.repositories.cinema.CompanyRepository;
 import com.example.cinema.repositories.cinema.GlobalCostRepository;
 import com.example.cinema.repositories.cinema.OperatingCostRepository;
 import com.example.cinema.services.cinema.inteface.CinemaService;
@@ -28,13 +32,21 @@ import java.util.UUID;
 public class CinemaServiceImplementation implements CinemaService {
 
     private final CinemaRepository cinemaRepository;
+    private final CompanyRepository companyRepository;
     private final CinemaWalletRepository cinemaWalletRepository;
     private final OperatingCostRepository operatingCostRepository;
     private final GlobalCostRepository globalCostRepository;
 
     @Autowired
-    public CinemaServiceImplementation(CinemaRepository cinemaRepository, CinemaWalletRepository cinemaWalletRepository, OperatingCostRepository operatingCostRepository, GlobalCostRepository globalCostRepository) {
+    public CinemaServiceImplementation(
+            CinemaRepository cinemaRepository,
+            CompanyRepository companyRepository,
+            CinemaWalletRepository cinemaWalletRepository,
+            OperatingCostRepository operatingCostRepository,
+            GlobalCostRepository globalCostRepository
+    ) {
         this.cinemaRepository = cinemaRepository;
+        this.companyRepository = companyRepository;
         this.cinemaWalletRepository = cinemaWalletRepository;
         this.operatingCostRepository = operatingCostRepository;
         this.globalCostRepository = globalCostRepository;
@@ -42,19 +54,54 @@ public class CinemaServiceImplementation implements CinemaService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createCinema(CreateCinemaRequest dto) throws ResourceNotFoundException {
+    public CompanyResponse createCompany(CreateCompanyRequest request) throws ConflictException {
+        String normalizedName = request.getName().trim();
+        if (companyRepository.existsByNameIgnoreCase(normalizedName)) {
+            throw new ConflictException("La empresa ya existe");
+        }
+
+        Company company = new Company();
+        company.setName(normalizedName);
+        return CompanyResponse.from(companyRepository.save(company));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CompanyResponse> listCompanies() {
+        return companyRepository.findAll()
+                .stream()
+                .map(CompanyResponse::from)
+                .toList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createCinema(CreateCinemaRequest dto) throws ResourceNotFoundException, ConflictException {
         GlobalCost globalCost = globalCostRepository.findFirstByOrderByEffectiveFromDesc()
                 .orElseThrow(() -> new ResourceNotFoundException("No hay un costo global registrado"));
 
-        Cinema cinema = cinemaRepository.save(dto.createEntity());
+        Company company = companyRepository.findById(dto.getCompanyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada con id: " + dto.getCompanyId()));
+
+        UUID adminCinemaId = dto.getAdminCinemaId();
+        if (adminCinemaId != null) {
+            Optional<Cinema> assigned = cinemaRepository.findByAdminCinemaId(adminCinemaId);
+            if (assigned.isPresent()) {
+                throw new ConflictException("El administrador ya esta asignado a otro cine");
+            }
+        }
+
+        Cinema cinema = dto.createEntity();
+        cinema.setCompany(company);
+        Cinema savedCinema = cinemaRepository.save(cinema);
 
         CinemaWallet wallet = new CinemaWallet();
-        wallet.setCinema(cinema);
+        wallet.setCinema(savedCinema);
         wallet.setBalance(BigDecimal.ZERO);
         cinemaWalletRepository.save(wallet);
 
         OperatingCost operatingCost = new OperatingCost();
-        operatingCost.setCinema(cinema);
+        operatingCost.setCinema(savedCinema);
         operatingCost.setDailyCost(globalCost.getDailyCost());
         operatingCost.setEffectiveFrom(dto.getEffectiveFrom());
         operatingCostRepository.save(operatingCost);
@@ -104,7 +151,6 @@ public class CinemaServiceImplementation implements CinemaService {
     public CinemaResponse getByAdminCinemaId(UUID adminCinemaId) throws ResourceNotFoundException {
         return cinemaRepository.findByAdminCinemaId(adminCinemaId)
                 .map(CinemaResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException("No se encontró un cine para el admin con id: " + adminCinemaId));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontro un cine para el admin con id: " + adminCinemaId));
     }
-
 }

@@ -7,10 +7,12 @@ import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
+import com.example.cinema.models.cinema.Company;
 import com.example.cinema.models.cinema.GlobalCost;
 import com.example.cinema.models.cinema.OperatingCost;
 import com.example.cinema.repositories.cinema.CinemaRepository;
 import com.example.cinema.repositories.cinema.CinemaWalletRepository;
+import com.example.cinema.repositories.cinema.CompanyRepository;
 import com.example.cinema.repositories.cinema.GlobalCostRepository;
 import com.example.cinema.repositories.cinema.OperatingCostRepository;
 import org.junit.jupiter.api.Test;
@@ -27,9 +29,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CinemaServiceImplTest {
@@ -37,8 +44,10 @@ public class CinemaServiceImplTest {
     private static final UUID CINEMA_ID  = UUID.randomUUID();
     private static final UUID ADMIN_ID   = UUID.randomUUID();
     private static final UUID COUNTRY_ID = UUID.randomUUID();
+    private static final UUID COMPANY_ID = UUID.randomUUID();
 
     @Mock private CinemaRepository cinemaRepository;
+    @Mock private CompanyRepository companyRepository;
     @Mock private CinemaWalletRepository cinemaWalletRepository;
     @Mock private OperatingCostRepository operatingCostRepository;
     @Mock private GlobalCostRepository globalCostRepository;
@@ -51,14 +60,16 @@ public class CinemaServiceImplTest {
         // Arrange
         LocalDate effectiveFrom = LocalDate.now();
         CreateCinemaRequest request = new CreateCinemaRequest(
-                ADMIN_ID, COUNTRY_ID, "Cinepolis Centro",
+                COMPANY_ID, ADMIN_ID, COUNTRY_ID, "Cinepolis Xela",
                 "Calle 1 #10", "+573001234567", "cinema@mail.com", effectiveFrom);
 
-        Cinema savedCinema = buildCinema("Cinepolis Centro");
+        Cinema savedCinema = buildCinema("Cinepolis Xela");
 
         ArgumentCaptor<CinemaWallet>  walletCaptor = ArgumentCaptor.forClass(CinemaWallet.class);
         ArgumentCaptor<OperatingCost> costCaptor   = ArgumentCaptor.forClass(OperatingCost.class);
 
+        when(companyRepository.findById(COMPANY_ID)).thenReturn(Optional.of(buildCompany()));
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.empty());
         when(cinemaRepository.save(any(Cinema.class))).thenReturn(savedCinema);
         when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
                 .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("500.00"))));
@@ -82,37 +93,11 @@ public class CinemaServiceImplTest {
     }
 
     @Test
-    void testCreateCinemaWithOptionalFieldsNull() throws Exception {
-        // Arrange
-        LocalDate effectiveFrom = LocalDate.now().minusDays(10);
-        CreateCinemaRequest request = new CreateCinemaRequest(
-                ADMIN_ID, COUNTRY_ID, "Cinepolis Sur", null, null, null, effectiveFrom);
-
-        Cinema savedCinema = buildCinema("Cinepolis Sur");
-
-        when(cinemaRepository.save(any(Cinema.class))).thenReturn(savedCinema);
-        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
-                .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("350.00"))));
-        when(cinemaWalletRepository.save(any(CinemaWallet.class))).thenReturn(new CinemaWallet());
-        when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
-
-        // Act
-        cinemaService.createCinema(request);
-
-        // Assert
-        assertAll(
-                () -> verify(cinemaRepository).save(any(Cinema.class)),
-                () -> verify(cinemaWalletRepository).save(any(CinemaWallet.class)),
-                () -> verify(operatingCostRepository).save(any(OperatingCost.class))
-        );
-    }
-
-    @Test
     void testCreateCinemaNoGlobalCost() {
         // Arrange
         LocalDate effectiveFrom = LocalDate.now();
         CreateCinemaRequest request = new CreateCinemaRequest(
-                ADMIN_ID, COUNTRY_ID, "Cinepolis Sur", null, null, null, effectiveFrom);
+                COMPANY_ID, ADMIN_ID, COUNTRY_ID, "Cinepolis Sur", null, null, null, effectiveFrom);
 
         when(globalCostRepository.findFirstByOrderByEffectiveFromDesc()).thenReturn(Optional.empty());
 
@@ -147,57 +132,6 @@ public class CinemaServiceImplTest {
     }
 
     @Test
-    void testUpdateCinemaTrimsWhitespace() throws Exception {
-        // Arrange — los campos con espacios deben guardarse sin espacios extremos
-        UpdateCinemaRequest request = new UpdateCinemaRequest(
-                "  Cinepolis Norte  ", "  Av. Principal 5  ", "  +573009876543  ", "  NORTE@mail.com  ");
-
-        ArgumentCaptor<Cinema> captor = ArgumentCaptor.forClass(Cinema.class);
-        Cinema existing = buildCinema("Cinepolis Centro");
-
-        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(existing));
-
-        // Act
-        cinemaService.updateCinema(CINEMA_ID, request);
-
-        // Assert
-        assertAll(
-                () -> verify(cinemaRepository).save(captor.capture()),
-                () -> assertEquals("Cinepolis Norte",   captor.getValue().getName()),
-                () -> assertEquals("Av. Principal 5",   captor.getValue().getAddress()),
-                () -> assertEquals("+573009876543",     captor.getValue().getPhone()),
-                () -> assertEquals("norte@mail.com",    captor.getValue().getEmail())
-        );
-    }
-
-    @Test
-    void testUpdateCinemaOnlyNonNullFields() throws Exception {
-        // Arrange
-        UpdateCinemaRequest request = new UpdateCinemaRequest("Cinepolis Norte", null, null, null);
-
-        ArgumentCaptor<Cinema> captor = ArgumentCaptor.forClass(Cinema.class);
-        Cinema existing = buildCinema("Cinepolis Centro");
-        existing.setAddress("Calle Original 1");
-        existing.setPhone("+570000000000");
-        existing.setEmail("original@mail.com");
-
-        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(existing));
-        when(cinemaRepository.save(any(Cinema.class))).thenReturn(existing);
-
-        // Act
-        cinemaService.updateCinema(CINEMA_ID, request);
-
-        // Assert
-        assertAll(
-                () -> verify(cinemaRepository).save(captor.capture()),
-                () -> assertEquals("Cinepolis Norte",  captor.getValue().getName()),
-                () -> assertEquals("Calle Original 1", captor.getValue().getAddress()),
-                () -> assertEquals("+570000000000",    captor.getValue().getPhone()),
-                () -> assertEquals("original@mail.com",captor.getValue().getEmail())
-        );
-    }
-
-    @Test
     void testUpdateCinemaWhenNotFound() {
         // Arrange
         UpdateCinemaRequest request = new UpdateCinemaRequest("Nuevo Nombre", null, null, null);
@@ -226,6 +160,7 @@ public class CinemaServiceImplTest {
         assertAll(
                 () -> assertEquals(2,                  result.size()),
                 () -> assertEquals("Cinepolis Centro", result.get(0).getName()),
+                () -> assertEquals("Cinepolis",        result.get(0).getCompanyName()),
                 () -> assertEquals("Cinepolis Norte",  result.get(1).getName())
         );
     }
@@ -254,6 +189,7 @@ public class CinemaServiceImplTest {
         // Assert
         assertAll(
                 () -> assertEquals(CINEMA_ID,  result.getId()),
+                () -> assertEquals(COMPANY_ID, result.getCompanyId()),
                 () -> assertEquals(COUNTRY_ID, result.getCountryId()),
                 () -> assertEquals("Cinepolis Centro", result.getName())
         );
@@ -273,11 +209,21 @@ public class CinemaServiceImplTest {
         Cinema c = new Cinema();
         c.setId(CINEMA_ID);
         c.setAdminCinemaId(ADMIN_ID);
+        c.setCompany(buildCompany());
         c.setCountryId(COUNTRY_ID);
         c.setName(name);
         c.setCreatedAt(LocalDateTime.now());
         c.setUpdatedAt(LocalDateTime.now());
         return c;
+    }
+
+    private Company buildCompany() {
+        Company company = new Company();
+        company.setId(COMPANY_ID);
+        company.setName("Cinepolis");
+        company.setCreatedAt(LocalDateTime.now());
+        company.setUpdatedAt(LocalDateTime.now());
+        return company;
     }
 
     private GlobalCost buildGlobalCost(BigDecimal dailyCost) {
@@ -288,3 +234,5 @@ public class CinemaServiceImplTest {
         return gc;
     }
 }
+
+

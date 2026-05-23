@@ -15,5 +15,7 @@ public interface CinemaRepository extends JpaRepository<Cinema, UUID> {
 
     List<Cinema> findByCountryId(UUID countryId);
 
+    List<Cinema> findByCompanyId(UUID companyId);
+
     boolean existsByNameIgnoreCase(String name);
 }

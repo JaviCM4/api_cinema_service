@@ -10,6 +10,9 @@ import java.util.UUID;
 public class CinemaResponse {
 
     UUID id;
+    UUID companyId;
+    String companyName;
+    UUID adminCinemaId;
     UUID countryId;
     String name;
     String address;
@@ -21,6 +24,9 @@ public class CinemaResponse {
     public static CinemaResponse from(Cinema cinema) {
         return new CinemaResponse(
                 cinema.getId(),
+                cinema.getCompany().getId(),
+                cinema.getCompany().getName(),
+                cinema.getAdminCinemaId(),
                 cinema.getCountryId(),
                 cinema.getName(),
                 cinema.getAddress(),
