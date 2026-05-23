@@ -43,7 +43,7 @@ public class CinemaController {
         return ResponseEntity.ok(cinemaService.findAll());
     }
 
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/companies")
     public ResponseEntity<List<CompanyResponse>> getCompanies() {
         return ResponseEntity.ok(cinemaService.listCompanies());

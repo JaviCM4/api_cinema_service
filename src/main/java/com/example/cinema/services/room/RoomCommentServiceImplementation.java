@@ -1,6 +1,7 @@
 package com.example.cinema.services.room;
 
 import com.example.cinema.client.tickets.TicketsClient;
+import com.example.cinema.client.users.UserClient;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
@@ -30,13 +31,17 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
     private final TheaterRepository theaterRepository;
     private final CinemaEventProducer eventProducer;
     private final TicketsClient ticketsClient;
+    private final UserClient userClient;
 
     @Autowired
-    public RoomCommentServiceImplementation(RoomCommentRepository commentRepository, TheaterRepository theaterRepository, CinemaEventProducer eventProducer, TicketsClient ticketsClient) {
+    public RoomCommentServiceImplementation(RoomCommentRepository commentRepository, TheaterRepository theaterRepository,
+                                            CinemaEventProducer eventProducer, TicketsClient ticketsClient,
+                                            UserClient userClient) {
         this.commentRepository = commentRepository;
         this.theaterRepository = theaterRepository;
         this.eventProducer = eventProducer;
         this.ticketsClient = ticketsClient;
+        this.userClient = userClient;
     }
 
     @Override
@@ -109,7 +114,7 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
         }
         return commentRepository.findByTheater_IdOrderByCreatedAtDesc(theaterId)
                 .stream()
-                .map(CommentResponse::from)
+                .map(comment -> CommentResponse.from(comment, userClient.getUserName(comment.getUserId())))
                 .toList();
     }
 }

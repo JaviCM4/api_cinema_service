@@ -49,7 +49,7 @@ class RoomCommentControllerTest {
     @Test
     void getComments_ReturnsList() throws Exception {
         CommentResponse comment = new CommentResponse(
-                COMMENT_ID, USER_ID, "Excelente sonido e imagen.", LocalDateTime.now());
+                COMMENT_ID, USER_ID, "Usuario Test", "Excelente sonido e imagen.", LocalDateTime.now(), false);
         when(commentService.findCommentsByTheater(THEATER_ID)).thenReturn(List.of(comment));
 
         mockMvc.perform(get("/v1/theaters/{theaterId}/comments", THEATER_ID))

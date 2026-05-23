@@ -31,9 +31,9 @@ DECLARE
     v_type_imax    UUID;
 
     -- ── Películas (UUIDs fake — vienen del movies-service) ───────────────────
-    v_movie1_id    UUID := 'b0b0b0b0-0000-0000-0000-0000000000A1';
-    v_movie2_id    UUID := 'b0b0b0b0-0000-0000-0000-0000000000A2';
-    v_movie3_id    UUID := 'b0b0b0b0-0000-0000-0000-0000000000A3';
+    v_movie1_id    UUID := 'ffffffff-0006-0006-0006-000000000001';
+    v_movie2_id    UUID := 'ffffffff-0006-0006-0006-000000000001';
+    v_movie3_id    UUID := 'ffffffff-0006-0006-0006-000000000002';
 
 BEGIN
     -- ── Resolver IDs de type_theater ─────────────────────────────────────────
@@ -110,27 +110,27 @@ BEGIN
     -- ── Funciones (fechas futuras, sin solapamiento por sala) ─────────────────
     -- Sala 1 (2D) — 20 mayo 2026
     INSERT INTO showtime (theater_id, movie_id, version_type, date_showtime, start_showtime, end_showtime) VALUES
-        (v_theater1_id, v_movie1_id, 'ORIGINAL',  '2026-05-20', '10:00', '12:15'),
-        (v_theater1_id, v_movie2_id, 'DUBBED',    '2026-05-20', '13:00', '15:00'),
-        (v_theater1_id, v_movie3_id, 'SUBTITLED', '2026-05-20', '16:00', '18:30'),
+        (v_theater1_id, v_movie1_id, 'ORIGINAL',  '2026-05-25', '10:00', '12:15'),
+        (v_theater1_id, v_movie2_id, 'DUBBED',    '2026-05-25', '13:00', '15:00'),
+        (v_theater1_id, v_movie3_id, 'SUBTITLED', '2026-05-24', '16:00', '18:30'),
         -- Sala 1 (2D) — 21 mayo 2026
-        (v_theater1_id, v_movie2_id, 'ORIGINAL',  '2026-05-21', '11:00', '13:00'),
-        (v_theater1_id, v_movie1_id, 'SUBTITLED', '2026-05-21', '15:30', '17:45');
+        (v_theater1_id, v_movie2_id, 'ORIGINAL',  '2026-05-26', '11:00', '13:00'),
+        (v_theater1_id, v_movie1_id, 'SUBTITLED', '2026-05-26', '15:30', '17:45');
 
     -- Sala 2 (3D) — 20 y 21 mayo 2026
     INSERT INTO showtime (theater_id, movie_id, version_type, date_showtime, start_showtime, end_showtime) VALUES
-        (v_theater2_id, v_movie1_id, 'SUBTITLED', '2026-05-20', '10:30', '12:45'),
-        (v_theater2_id, v_movie3_id, 'DUBBED',    '2026-05-20', '14:00', '16:30'),
-        (v_theater2_id, v_movie2_id, 'ORIGINAL',  '2026-05-21', '09:00', '11:15'),
-        (v_theater2_id, v_movie1_id, 'DUBBED',    '2026-05-21', '12:00', '14:00');
+        (v_theater2_id, v_movie1_id, 'SUBTITLED', '2026-05-25', '10:30', '12:45'),
+        (v_theater2_id, v_movie3_id, 'DUBBED',    '2026-05-25', '14:00', '16:30'),
+        (v_theater2_id, v_movie2_id, 'ORIGINAL',  '2026-05-25', '09:00', '11:15'),
+        (v_theater2_id, v_movie1_id, 'DUBBED',    '2026-05-27', '12:00', '14:00');
 
     -- Sala 3 (IMAX) — 22 y 23 mayo 2026
     INSERT INTO showtime (theater_id, movie_id, version_type, date_showtime, start_showtime, end_showtime) VALUES
-        (v_theater3_id, v_movie3_id, 'ORIGINAL',  '2026-05-22', '09:00', '11:30'),
-        (v_theater3_id, v_movie1_id, 'SUBTITLED', '2026-05-22', '12:30', '15:00'),
-        (v_theater3_id, v_movie2_id, 'DUBBED',    '2026-05-22', '16:00', '18:15'),
-        (v_theater3_id, v_movie3_id, 'ORIGINAL',  '2026-05-23', '10:00', '12:30'),
-        (v_theater3_id, v_movie1_id, 'ORIGINAL',  '2026-05-23', '14:00', '16:30');
+        (v_theater3_id, v_movie3_id, 'ORIGINAL',  '2026-05-25', '09:00', '11:30'),
+        (v_theater3_id, v_movie1_id, 'SUBTITLED', '2026-05-25', '12:30', '15:00'),
+        (v_theater3_id, v_movie2_id, 'DUBBED',    '2026-05-26', '16:00', '18:15'),
+        (v_theater3_id, v_movie3_id, 'ORIGINAL',  '2026-05-26', '10:00', '12:30'),
+        (v_theater3_id, v_movie1_id, 'ORIGINAL',  '2026-05-27', '14:00', '16:30');
 
     -- ── Comentarios de sala ───────────────────────────────────────────────────
     INSERT INTO room_comment (theater_id, user_id, content) VALUES
