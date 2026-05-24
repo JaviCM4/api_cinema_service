@@ -9,6 +9,7 @@ import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.repositories.cinema.AdBlockPricingRepository;
 import com.example.cinema.repositories.cinema.CinemaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class AdBlockPricingServiceImpl implements AdBlockPricingService{
         this.cinemaRepository = cinemaRepository;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public AdBlockPricingResponse getAdBlockPricing(UUID cinemaId) throws ResourceNotFoundException {
         //Obtenemos el precio de bloque publicitario para el cine dado su ID
@@ -32,6 +34,7 @@ public class AdBlockPricingServiceImpl implements AdBlockPricingService{
         return AdBlockPricingResponse.fromEntity(adBlockPricing);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public AdBlockPricingResponse createAdBlockPricing(UUID cinemaId, AdBlockPricingRequest request) throws ResourceNotFoundException, ConflictException {
         //Verificamos que el cine exista
@@ -52,6 +55,7 @@ public class AdBlockPricingServiceImpl implements AdBlockPricingService{
         return AdBlockPricingResponse.fromEntity(savedAdBlockPricing);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public AdBlockPricingResponse updateAdBlockPricing(UUID cinemaId, AdBlockPricingRequest request) throws ResourceNotFoundException {
         //Obtenemos el precio de bloque publicitario para el cine dado su ID
@@ -65,6 +69,7 @@ public class AdBlockPricingServiceImpl implements AdBlockPricingService{
         return AdBlockPricingResponse.fromEntity(updatedAdBlockPricing);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<AdBlockPricingResponse> getAllAdBlockPricings() {
         //Obtenemos todos los precios de bloque publicitario y los convertimos a respuestas DTO
