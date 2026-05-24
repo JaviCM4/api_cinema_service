@@ -117,4 +117,21 @@ public class ShowtimeServiceImplementation implements ShowtimeService {
         }
         return result;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShowtimeByTheaterResponse> findAllShowtimesByTheaterForAdmin(UUID theaterId) {
+        List<Showtime> showtimes = showtimeRepository.findByTheater_Id(theaterId);
+        LocalDateTime now = LocalDateTime.now();
+        List<ShowtimeByTheaterResponse> result = new ArrayList<>();
+        for (Showtime showtime : showtimes) {
+            LocalDateTime showtimeStart = LocalDateTime.of(showtime.getDateShowtime(), showtime.getStartShowtime());
+            String alert = (showtime.isActive() && showtimeStart.isBefore(now.plusMinutes(ALERT_MINUTES_BEFORE)) && showtimeStart.isAfter(now))
+                    ? "¡La función está a punto de comenzar!" : null;
+            result.add(ShowtimeByTheaterResponse.from(showtime, alert));
+        }
+        result.sort(java.util.Comparator.comparing(ShowtimeByTheaterResponse::getDateShowtime)
+                .thenComparing(ShowtimeByTheaterResponse::getStartShowtime));
+        return result;
+    }
 }

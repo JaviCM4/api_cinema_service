@@ -20,4 +20,6 @@ public interface ShowtimeService {
             throws ResourceNotFoundException, ConflictException;
 
     List<ShowtimeByTheaterResponse> findShowtimesByTheater(UUID theaterId);
+
+    List<ShowtimeByTheaterResponse> findAllShowtimesByTheaterForAdmin(UUID theaterId);
 }

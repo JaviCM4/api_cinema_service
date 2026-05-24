@@ -16,6 +16,7 @@ public class ShowtimeByTheaterResponse {
     LocalDate dateShowtime;
     String startShowtime;
     String endShowtime;
+    boolean isActive;
     String alert;
 
     public static ShowtimeByTheaterResponse from(Showtime showtime, String alert) {
@@ -26,6 +27,7 @@ public class ShowtimeByTheaterResponse {
                 showtime.getDateShowtime(),
                 showtime.getStartShowtime().format(DateTimeFormatter.ofPattern("HH:mm")),
                 showtime.getEndShowtime().format(DateTimeFormatter.ofPattern("HH:mm")),
+                showtime.isActive(),
                 alert
         );
     }

@@ -2,6 +2,7 @@ package com.example.cinema.controllers;
 
 import com.example.cinema.dtos.showtime.request.CreateShowtimeRequest;
 import com.example.cinema.dtos.showtime.request.UpdateShowtimeRequest;
+import com.example.cinema.dtos.showtime.response.ShowtimeByTheaterResponse;
 import com.example.cinema.dtos.showtime.response.ShowtimeResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
@@ -26,6 +27,12 @@ public class ShowtimeController {
     @Autowired
     public ShowtimeController(ShowtimeService showtimeService) {
         this.showtimeService = showtimeService;
+    }
+
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
+    @GetMapping("/theater/{theaterId}")
+    public ResponseEntity<List<ShowtimeByTheaterResponse>> getShowtimesByTheater(@PathVariable UUID theaterId) {
+        return ResponseEntity.ok(showtimeService.findAllShowtimesByTheaterForAdmin(theaterId));
     }
 
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")

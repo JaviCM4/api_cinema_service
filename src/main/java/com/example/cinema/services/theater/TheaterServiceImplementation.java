@@ -5,6 +5,7 @@ import com.example.cinema.dtos.theater.request.UpdateTheaterRequest;
 import com.example.cinema.dtos.theater.response.ShowtimeInTheaterResponse;
 import com.example.cinema.dtos.theater.response.TheaterClientResponse;
 import com.example.cinema.dtos.theater.response.TheaterResponse;
+import com.example.cinema.dtos.theater.response.TypeTheaterResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
@@ -150,5 +151,14 @@ public class TheaterServiceImplementation implements TheaterService {
             rowIndex /= 26;
         }
         return sb.toString();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TypeTheaterResponse> findAllTypeTheaters() {
+        return typeTheaterRepository.findAll()
+                .stream()
+                .map(TypeTheaterResponse::from)
+                .toList();
     }
 }

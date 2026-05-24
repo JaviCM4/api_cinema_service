@@ -4,6 +4,7 @@ import com.example.cinema.dtos.theater.request.CreateTheaterRequest;
 import com.example.cinema.dtos.theater.request.UpdateTheaterRequest;
 import com.example.cinema.dtos.theater.response.TheaterClientResponse;
 import com.example.cinema.dtos.theater.response.TheaterResponse;
+import com.example.cinema.dtos.theater.response.TypeTheaterResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.theater.inteface.TheaterService;
@@ -42,6 +43,12 @@ public class TheaterController {
             throws ResourceNotFoundException {
         theaterService.updateTheater(theaterId, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','CINEMA_ADMIN')")
+    @GetMapping("/types")
+    public ResponseEntity<List<TypeTheaterResponse>> getTypeTheaters() {
+        return ResponseEntity.ok(theaterService.findAllTypeTheaters());
     }
 
     @PreAuthorize("isAuthenticated()")

@@ -11,6 +11,7 @@ import com.example.cinema.repositories.theater.TheaterRepository;
 import com.example.cinema.repositories.theater.TypeTheaterRepository;
 import com.example.cinema.services.theater.inteface.TheaterPricingService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class TheaterPricingImplementation implements TheaterPricingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TheaterPrincingResponse getTheaterPricing(UUID theaterId) throws ResourceNotFoundException, ConflictException {
         //Obtenemos la sala
         Theater theater = theaterRepository.findById(theaterId)
