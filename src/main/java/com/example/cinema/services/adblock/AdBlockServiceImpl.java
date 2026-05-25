@@ -94,6 +94,7 @@ public class AdBlockServiceImpl implements AdBlockService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AdBlockResponse> getAdBlocksByCinemaId(UUID cinemaId) throws ResourceNotFoundException {
         List<AdBlock> adBlocks = adBlockRepository.findByCinema_IdOrderByStartDateDesc(cinemaId);
 
