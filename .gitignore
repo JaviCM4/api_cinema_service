@@ -33,3 +33,7 @@ build/
 .vscode/
 
 application-dev.properties
+
+### ENV files ###
+.env
+.env.prod
