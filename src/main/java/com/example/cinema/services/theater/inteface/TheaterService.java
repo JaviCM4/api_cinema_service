@@ -21,5 +21,7 @@ public interface TheaterService {
 
     List<TheaterClientResponse> findTheatersByMovie(UUID movieId);
 
+    List<TheaterClientResponse> findTheatersWithShowtimesByCinema(UUID cinemaId);
+
     List<TypeTheaterResponse> findAllTypeTheaters();
 }

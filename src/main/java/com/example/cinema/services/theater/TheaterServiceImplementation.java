@@ -128,6 +128,39 @@ public class TheaterServiceImplementation implements TheaterService {
                 .toList();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<TheaterClientResponse> findTheatersWithShowtimesByCinema(UUID cinemaId) {
+        List<Showtime> showtimes =
+                showtimeRepository.findByTheater_Cinema_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(cinemaId);
+
+        LocalDateTime now = LocalDateTime.now();
+        Map<UUID, Theater> theaterMap = new LinkedHashMap<>();
+        Map<UUID, List<ShowtimeInTheaterResponse>> showtimeMap = new LinkedHashMap<>();
+
+        for (Showtime showtime : showtimes) {
+            LocalDateTime start = showtime.getDateShowtime().atTime(showtime.getStartShowtime());
+            if (!start.isAfter(now)) {
+                showtime.setActive(false);
+                showtimeRepository.save(showtime);
+                continue;
+            }
+            String alert = start.isBefore(now.plusMinutes(ALERT_MINUTES_BEFORE))
+                    ? "Comienza en menos de " + ALERT_MINUTES_BEFORE + " minutos"
+                    : null;
+
+            UUID theaterId = showtime.getTheater().getId();
+            theaterMap.putIfAbsent(theaterId, showtime.getTheater());
+            showtimeMap.computeIfAbsent(theaterId, k -> new ArrayList<>())
+                    .add(ShowtimeInTheaterResponse.from(showtime, alert));
+        }
+
+        return theaterMap.entrySet().stream()
+                .map(e -> TheaterClientResponse.from(e.getValue(),
+                        showtimeMap.getOrDefault(e.getKey(), List.of())))
+                .toList();
+    }
+
     private List<Seat> generateSeats(Theater theater, int rows, int cols) {
         List<Seat> seats = new ArrayList<>(rows * cols);
         for (int r = 1; r <= rows; r++) {

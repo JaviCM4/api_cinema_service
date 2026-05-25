@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.config.SecurityConfig;
 import com.example.cinema.dtos.theater.response.TheaterClientResponse;
 import com.example.cinema.dtos.theater.response.TheaterResponse;
+import com.example.cinema.dtos.theater.response.TypeTheaterResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.services.theater.inteface.TheaterService;
@@ -17,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,6 +48,7 @@ class TheaterControllerTest {
     private static final UUID MOVIE_ID        = UUID.fromString("b0b0b0b0-0000-0000-0000-0000000000A1");
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void createTheater_Created() throws Exception {
         String body = """
                 {
@@ -65,6 +69,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void createTheater_MissingRequiredFields_BadRequest() throws Exception {
         mockMvc.perform(post("/v1/theaters")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -73,6 +78,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void createTheater_CinemaNotFound() throws Exception {
         String body = """
                 {
@@ -94,6 +100,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void createTheater_NameConflict() throws Exception {
         String body = """
                 {
@@ -115,6 +122,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void updateTheater_NoContent() throws Exception {
         String body = """
                 {
@@ -135,6 +143,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void updateTheater_NotFound() throws Exception {
         String body = """
                 {
@@ -156,6 +165,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
     void updateTheater_MissingRequiredFields_BadRequest() throws Exception {
         mockMvc.perform(patch("/v1/theaters/{id}", THEATER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -166,6 +176,7 @@ class TheaterControllerTest {
     // ── GET /v1/theaters?cinemaId=... ─────────────────────────────────────────
 
     @Test
+    @WithMockUser
     void findTheatersByCinema_ReturnsList() throws Exception {
         TheaterResponse theater = new TheaterResponse(
                 THEATER_ID, TYPE_THEATER_ID, "2D", "Sala 2D - A",
@@ -179,6 +190,7 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser
     void findTheatersByCinema_EmptyList() throws Exception {
         when(theaterService.findTheatersByCinema(CINEMA_ID)).thenReturn(List.of());
 
@@ -190,6 +202,7 @@ class TheaterControllerTest {
     // ── GET /v1/theaters/movie?movieId=... ────────────────────────────────────
 
     @Test
+    @WithMockUser
     void findTheatersByMovie_ReturnsList() throws Exception {
         TheaterClientResponse client = new TheaterClientResponse(
                 THEATER_ID, "2D", "Sala 2D - A", 5, 8, List.of());
@@ -202,10 +215,61 @@ class TheaterControllerTest {
     }
 
     @Test
+    @WithMockUser
     void findTheatersByMovie_EmptyList() throws Exception {
         when(theaterService.findTheatersByMovie(MOVIE_ID)).thenReturn(List.of());
 
         mockMvc.perform(get("/v1/theaters/movie").param("movieId", MOVIE_ID.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    // ── GET /v1/theaters/cinema/{cinemaId} ────────────────────────────────────
+
+    @Test
+    @WithMockUser
+    void findTheatersWithShowtimesByCinema_ReturnsList() throws Exception {
+        TheaterClientResponse client = new TheaterClientResponse(
+                THEATER_ID, "IMAX", "Sala IMAX", 5, 8, List.of());
+        when(theaterService.findTheatersWithShowtimesByCinema(CINEMA_ID)).thenReturn(List.of(client));
+
+        mockMvc.perform(get("/v1/theaters/cinema/{cinemaId}", CINEMA_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Sala IMAX"))
+                .andExpect(jsonPath("$[0].typeTheaterName").value("IMAX"))
+                .andExpect(jsonPath("$[0].rows").value(5));
+    }
+
+    @Test
+    @WithMockUser
+    void findTheatersWithShowtimesByCinema_EmptyList() throws Exception {
+        when(theaterService.findTheatersWithShowtimesByCinema(CINEMA_ID)).thenReturn(List.of());
+
+        mockMvc.perform(get("/v1/theaters/cinema/{cinemaId}", CINEMA_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    // ── GET /v1/theaters/types ──────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
+    void getTypeTheaters_ReturnsList() throws Exception {
+        TypeTheaterResponse type = new TypeTheaterResponse(TYPE_THEATER_ID, "2D");
+        when(theaterService.findAllTypeTheaters()).thenReturn(List.of(type));
+
+        mockMvc.perform(get("/v1/theaters/types"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("2D"))
+                .andExpect(jsonPath("$[0].id").value(TYPE_THEATER_ID.toString()));
+    }
+
+    @Test
+    @WithMockUser(roles = "CINEMA_ADMIN")
+    void getTypeTheaters_EmptyList() throws Exception {
+        when(theaterService.findAllTypeTheaters()).thenReturn(List.of());
+
+        mockMvc.perform(get("/v1/theaters/types"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }

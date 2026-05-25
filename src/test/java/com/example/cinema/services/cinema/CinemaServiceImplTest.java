@@ -1,9 +1,12 @@
 package com.example.cinema.services.cinema;
 
 import com.example.cinema.dtos.cinema.request.CreateCinemaRequest;
+import com.example.cinema.dtos.cinema.request.CreateCompanyRequest;
 import com.example.cinema.dtos.cinema.request.UpdateCinemaRequest;
 import com.example.cinema.dtos.cinema.response.CinemaResponse;
 import com.example.cinema.dtos.cinema.response.CinemaSummaryResponse;
+import com.example.cinema.dtos.cinema.response.CompanyResponse;
+import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.models.cinema.Cinema;
 import com.example.cinema.models.cinema.CinemaWallet;
@@ -203,6 +206,192 @@ public class CinemaServiceImplTest {
         // Assert
         assertThrows(ResourceNotFoundException.class,
                 () -> cinemaService.getByAdminCinemaId(ADMIN_ID));
+    }
+
+    // ─── createCompany ────────────────────────────────────────────────────────
+
+    @Test
+    void testCreateCompany() throws Exception {
+        CreateCompanyRequest request = new CreateCompanyRequest("  Cinepolis  ");
+        Company saved = buildCompany();
+
+        when(companyRepository.existsByNameIgnoreCase("Cinepolis")).thenReturn(false);
+        when(companyRepository.save(any(Company.class))).thenReturn(saved);
+
+        CompanyResponse result = cinemaService.createCompany(request);
+
+        assertAll(
+                () -> assertEquals("Cinepolis", result.getName()),
+                () -> assertEquals(COMPANY_ID,  result.getId()),
+                () -> verify(companyRepository).save(any(Company.class))
+        );
+    }
+
+    @Test
+    void testCreateCompanyConflict() {
+        CreateCompanyRequest request = new CreateCompanyRequest("Cinepolis");
+
+        when(companyRepository.existsByNameIgnoreCase("Cinepolis")).thenReturn(true);
+
+        assertThrows(ConflictException.class, () -> cinemaService.createCompany(request));
+        verify(companyRepository, never()).save(any());
+    }
+
+    // ─── listCompanies ────────────────────────────────────────────────────────
+
+    @Test
+    void testListCompanies() {
+        Company c2 = new Company();
+        c2.setId(UUID.randomUUID());
+        c2.setName("Cinemagic");
+        c2.setCreatedAt(java.time.LocalDateTime.now());
+        c2.setUpdatedAt(java.time.LocalDateTime.now());
+
+        when(companyRepository.findAll()).thenReturn(List.of(buildCompany(), c2));
+
+        List<CompanyResponse> result = cinemaService.listCompanies();
+
+        assertAll(
+                () -> assertEquals(2,           result.size()),
+                () -> assertEquals("Cinepolis", result.get(0).getName()),
+                () -> assertEquals("Cinemagic", result.get(1).getName())
+        );
+    }
+
+    @Test
+    void testListCompaniesEmpty() {
+        when(companyRepository.findAll()).thenReturn(List.of());
+
+        assertTrue(cinemaService.listCompanies().isEmpty());
+    }
+
+    // ─── createCinema additional branches ────────────────────────────────────
+
+    @Test
+    void testCreateCinemaCompanyNotFound() {
+        LocalDate effectiveFrom = LocalDate.now();
+        CreateCinemaRequest request = new CreateCinemaRequest(
+                COMPANY_ID, null, COUNTRY_ID, "Cinepolis Xela", "Calle 1", "+573001234567", "cinema@mail.com", effectiveFrom);
+
+        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
+                .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("500.00"))));
+        when(companyRepository.findById(COMPANY_ID)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> cinemaService.createCinema(request));
+        verify(cinemaRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateCinemaAdminAlreadyAssigned() {
+        LocalDate effectiveFrom = LocalDate.now();
+        CreateCinemaRequest request = new CreateCinemaRequest(
+                COMPANY_ID, ADMIN_ID, COUNTRY_ID, "Cinepolis Xela", "Calle 1", "+573001234567", "cinema@mail.com", effectiveFrom);
+
+        Cinema anotherCinema = buildCinema("Cinepolis Norte");
+        anotherCinema.setId(UUID.randomUUID());
+
+        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
+                .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("500.00"))));
+        when(companyRepository.findById(COMPANY_ID)).thenReturn(Optional.of(buildCompany()));
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(anotherCinema));
+
+        assertThrows(ConflictException.class, () -> cinemaService.createCinema(request));
+        verify(cinemaRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateCinemaWithoutAdminId() throws Exception {
+        LocalDate effectiveFrom = LocalDate.now();
+        CreateCinemaRequest request = new CreateCinemaRequest(
+                COMPANY_ID, null, COUNTRY_ID, "Cinepolis Xela", "Calle 1 #10", "+573001234567", "cinema@mail.com", effectiveFrom);
+        Cinema savedCinema = buildCinema("Cinepolis Xela");
+
+        when(globalCostRepository.findFirstByOrderByEffectiveFromDesc())
+                .thenReturn(Optional.of(buildGlobalCost(new BigDecimal("500.00"))));
+        when(companyRepository.findById(COMPANY_ID)).thenReturn(Optional.of(buildCompany()));
+        when(cinemaRepository.save(any(Cinema.class))).thenReturn(savedCinema);
+        when(cinemaWalletRepository.save(any(CinemaWallet.class))).thenReturn(new CinemaWallet());
+        when(operatingCostRepository.save(any(OperatingCost.class))).thenReturn(new OperatingCost());
+
+        cinemaService.createCinema(request);
+
+        assertAll(
+                () -> verify(cinemaRepository, never()).findByAdminCinemaId(any()),
+                () -> verify(cinemaRepository).save(any(Cinema.class))
+        );
+    }
+
+    // ─── updateCinema partial fields ──────────────────────────────────────────
+
+    @Test
+    void testUpdateCinemaPartialFields() throws Exception {
+        UpdateCinemaRequest request = new UpdateCinemaRequest(null, null, "  +573009990000  ", "NEW@MAIL.COM");
+        Cinema existing = buildCinema("Cinepolis Centro");
+        ArgumentCaptor<Cinema> captor = ArgumentCaptor.forClass(Cinema.class);
+
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(existing));
+
+        cinemaService.updateCinema(CINEMA_ID, request);
+
+        assertAll(
+                () -> verify(cinemaRepository).save(captor.capture()),
+                () -> assertEquals("Cinepolis Centro", captor.getValue().getName()),
+                () -> assertEquals("+573009990000",    captor.getValue().getPhone()),
+                () -> assertEquals("new@mail.com",     captor.getValue().getEmail())
+        );
+    }
+
+    // ─── assignCinemaAdmin ────────────────────────────────────────────────────
+
+    @Test
+    void testAssignCinemaAdmin() throws Exception {
+        Cinema cinema = buildCinema("Cinepolis Centro");
+        ArgumentCaptor<Cinema> captor = ArgumentCaptor.forClass(Cinema.class);
+
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(cinema));
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.empty());
+
+        cinemaService.assignCinemaAdmin(CINEMA_ID, ADMIN_ID);
+
+        assertAll(
+                () -> verify(cinemaRepository).save(captor.capture()),
+                () -> assertEquals(ADMIN_ID, captor.getValue().getAdminCinemaId())
+        );
+    }
+
+    @Test
+    void testAssignCinemaAdminCinemaNotFound() {
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> cinemaService.assignCinemaAdmin(CINEMA_ID, ADMIN_ID));
+        verify(cinemaRepository, never()).save(any());
+    }
+
+    @Test
+    void testAssignCinemaAdminAlreadyAssignedToDifferentCinema() {
+        Cinema existingCinema = buildCinema("Cinepolis Centro");
+        Cinema otherCinema = buildCinema("Cinepolis Norte");
+        otherCinema.setId(UUID.randomUUID());
+
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(existingCinema));
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(otherCinema));
+
+        assertThrows(ConflictException.class,
+                () -> cinemaService.assignCinemaAdmin(CINEMA_ID, ADMIN_ID));
+        verify(cinemaRepository, never()).save(any());
+    }
+
+    @Test
+    void testAssignCinemaAdminAlreadyAssignedToSameCinema() throws Exception {
+        Cinema cinema = buildCinema("Cinepolis Centro"); // id == CINEMA_ID
+
+        when(cinemaRepository.findById(CINEMA_ID)).thenReturn(Optional.of(cinema));
+        when(cinemaRepository.findByAdminCinemaId(ADMIN_ID)).thenReturn(Optional.of(cinema));
+
+        cinemaService.assignCinemaAdmin(CINEMA_ID, ADMIN_ID);
+
+        verify(cinemaRepository).save(cinema);
     }
 
     private Cinema buildCinema(String name) {

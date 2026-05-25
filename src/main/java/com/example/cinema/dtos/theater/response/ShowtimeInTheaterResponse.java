@@ -11,6 +11,7 @@ import java.util.UUID;
 public class ShowtimeInTheaterResponse {
 
     UUID id;
+    UUID movieId;
     String versionTypeName;
     LocalDate dateShowtime;
     String startShowtime;
@@ -20,6 +21,7 @@ public class ShowtimeInTheaterResponse {
     public static ShowtimeInTheaterResponse from(Showtime showtime, String alert) {
         return new ShowtimeInTheaterResponse(
                 showtime.getId(),
+                showtime.getMovieId(),
                 showtime.getVersionType().name(),
                 showtime.getDateShowtime(),
                 showtime.getStartShowtime().format(DateTimeFormatter.ofPattern("HH:mm")),

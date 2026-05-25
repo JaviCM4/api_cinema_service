@@ -269,7 +269,8 @@ public class TheaterServiceImplTest {
                 () -> assertEquals(1, result.size()),
                 () -> assertEquals(THEATER_ID, result.get(0).getId()),
                 () -> assertEquals("Sala 1",   result.get(0).getName()),
-                () -> assertEquals(1,          result.get(0).getShowtimes().size())
+                () -> assertEquals(1,          result.get(0).getShowtimes().size()),
+                () -> assertEquals(movieId,    result.get(0).getShowtimes().get(0).getMovieId())
         );
     }
 
@@ -330,6 +331,122 @@ public class TheaterServiceImplTest {
 
         // Act
         List<TheaterClientResponse> result = theaterService.findTheatersByMovie(movieId);
+
+        // Assert
+        assertAll(
+                () -> assertTrue(result.isEmpty()),
+                () -> verify(showtimeRepository).save(argThat(s -> !s.isActive()))
+        );
+    }
+
+    // ── findTheatersWithShowtimesByCinema ───────────────────────────────────────
+
+    @Test
+    void testFindTheatersWithShowtimesByCinemaEmpty() {
+        when(showtimeRepository
+                .findByTheater_Cinema_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(CINEMA_ID))
+                .thenReturn(List.of());
+
+        List<TheaterClientResponse> result = theaterService.findTheatersWithShowtimesByCinema(CINEMA_ID);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testFindTheatersWithShowtimesByCinemaWithContent() {
+        // Arrange
+        UUID movieId = UUID.randomUUID();
+        Cinema cinema = buildCinema();
+        TypeTheater type = buildTypeTheater("IMAX");
+        Theater theater = buildTheater("Sala IMAX", cinema, type);
+
+        Showtime showtime = new Showtime();
+        showtime.setId(UUID.randomUUID());
+        showtime.setTheater(theater);
+        showtime.setMovieId(movieId);
+        showtime.setVersionType(VersionType.DUBBED);
+        showtime.setDateShowtime(LocalDateTime.now().plusDays(1).toLocalDate());
+        showtime.setStartShowtime(LocalDateTime.now().plusDays(1).plusHours(2).toLocalTime());
+        showtime.setEndShowtime(LocalDateTime.now().plusDays(1).plusHours(4).toLocalTime());
+        showtime.setActive(true);
+
+        when(showtimeRepository
+                .findByTheater_Cinema_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(CINEMA_ID))
+                .thenReturn(List.of(showtime));
+
+        // Act
+        List<TheaterClientResponse> result = theaterService.findTheatersWithShowtimesByCinema(CINEMA_ID);
+
+        // Assert
+        assertAll(
+                () -> assertEquals(1,           result.size()),
+                () -> assertEquals(THEATER_ID,  result.get(0).getId()),
+                () -> assertEquals("Sala IMAX", result.get(0).getName()),
+                () -> assertEquals(1,           result.get(0).getShowtimes().size()),
+                () -> assertEquals(movieId,     result.get(0).getShowtimes().get(0).getMovieId()),
+                () -> assertNull(result.get(0).getShowtimes().get(0).getAlert())
+        );
+    }
+
+    @Test
+    void testFindTheatersWithShowtimesByCinemaWithAlert() {
+        // Arrange — función empieza en 15 minutos (dentro del umbral)
+        UUID movieId = UUID.randomUUID();
+        Cinema cinema = buildCinema();
+        TypeTheater type = buildTypeTheater("3D");
+        Theater theater = buildTheater("Sala 3D", cinema, type);
+
+        LocalDateTime now = LocalDateTime.now();
+        Showtime showtime = new Showtime();
+        showtime.setId(UUID.randomUUID());
+        showtime.setTheater(theater);
+        showtime.setMovieId(movieId);
+        showtime.setVersionType(VersionType.ORIGINAL);
+        showtime.setDateShowtime(now.plusMinutes(15).toLocalDate());
+        showtime.setStartShowtime(now.plusMinutes(15).toLocalTime());
+        showtime.setEndShowtime(now.plusMinutes(135).toLocalTime());
+        showtime.setActive(true);
+
+        when(showtimeRepository
+                .findByTheater_Cinema_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(CINEMA_ID))
+                .thenReturn(List.of(showtime));
+
+        // Act
+        List<TheaterClientResponse> result = theaterService.findTheatersWithShowtimesByCinema(CINEMA_ID);
+
+        // Assert
+        assertAll(
+                () -> assertEquals(1, result.size()),
+                () -> assertEquals(1, result.get(0).getShowtimes().size()),
+                () -> assertNotNull(result.get(0).getShowtimes().get(0).getAlert())
+        );
+    }
+
+    @Test
+    void testFindTheatersWithShowtimesByCinemaPastShowtimesDeactivated() {
+        // Arrange
+        UUID movieId = UUID.randomUUID();
+        Cinema cinema = buildCinema();
+        TypeTheater type = buildTypeTheater("2D");
+        Theater theater = buildTheater("Sala 2D", cinema, type);
+
+        Showtime pastShowtime = new Showtime();
+        pastShowtime.setId(UUID.randomUUID());
+        pastShowtime.setTheater(theater);
+        pastShowtime.setMovieId(movieId);
+        pastShowtime.setVersionType(VersionType.DUBBED);
+        pastShowtime.setDateShowtime(LocalDateTime.now().minusDays(1).toLocalDate());
+        pastShowtime.setStartShowtime(LocalDateTime.now().minusDays(1).toLocalTime());
+        pastShowtime.setEndShowtime(LocalDateTime.now().minusDays(1).plusHours(2).toLocalTime());
+        pastShowtime.setActive(true);
+
+        when(showtimeRepository
+                .findByTheater_Cinema_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(CINEMA_ID))
+                .thenReturn(List.of(pastShowtime));
+        when(showtimeRepository.save(any(Showtime.class))).thenReturn(pastShowtime);
+
+        // Act
+        List<TheaterClientResponse> result = theaterService.findTheatersWithShowtimesByCinema(CINEMA_ID);
 
         // Assert
         assertAll(

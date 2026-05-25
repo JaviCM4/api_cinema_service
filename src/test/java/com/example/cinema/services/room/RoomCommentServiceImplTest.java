@@ -4,6 +4,7 @@ import com.example.cinema.client.tickets.TicketsClient;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.client.users.UserClient;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
@@ -40,6 +41,8 @@ public class RoomCommentServiceImplTest {
     @Mock private TheaterRepository theaterRepository;
     @Mock private CinemaEventProducer eventProducer;
     @Mock private TicketsClient ticketsClient;
+
+    @Mock private UserClient userClient;
 
     @InjectMocks
     private RoomCommentServiceImplementation commentService;
@@ -190,6 +193,7 @@ public class RoomCommentServiceImplTest {
 
     @Test
     void testFindCommentsByTheater() throws Exception {
+        when(userClient.getUserName(any())).thenReturn("Usuario Test");
         // Arrange
         RoomComment c1 = buildComment("Primer comentario");
         RoomComment c2 = buildComment("Segundo comentario");

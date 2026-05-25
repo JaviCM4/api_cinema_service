@@ -312,6 +312,85 @@ public class ShowtimeServiceImplTest {
         assertTrue(result.isEmpty());
     }
 
+    // ─── findAllShowtimesByTheaterForAdmin ────────────────────────────────────
+
+    @Test
+    void testFindAllShowtimesByTheaterForAdminEmpty() {
+        when(showtimeRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of());
+
+        List<ShowtimeByTheaterResponse> result = showtimeService.findAllShowtimesByTheaterForAdmin(THEATER_ID);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testFindAllShowtimesByTheaterForAdminWithResults() {
+        // Función futura activa (más de 30 min) → sin alerta, incluida
+        Showtime showtime = buildShowtime(
+                LocalDate.now().plusDays(2), LocalTime.of(14, 0), LocalTime.of(16, 0));
+
+        when(showtimeRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(showtime));
+
+        List<ShowtimeByTheaterResponse> result = showtimeService.findAllShowtimesByTheaterForAdmin(THEATER_ID);
+
+        assertAll(
+                () -> assertEquals(1, result.size()),
+                () -> assertEquals(MOVIE_ID, result.get(0).getMovieId()),
+                () -> assertNull(result.get(0).getAlert())
+        );
+    }
+
+    @Test
+    void testFindAllShowtimesByTheaterForAdminWithAlert() {
+        // Función activa que comienza en 10 minutos → debe tener alerta
+        LocalTime start = LocalTime.now().plusMinutes(10);
+        LocalTime end   = start.plusMinutes(120);
+        Showtime showtime = buildShowtime(LocalDate.now(), start, end);
+
+        when(showtimeRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(showtime));
+
+        List<ShowtimeByTheaterResponse> result = showtimeService.findAllShowtimesByTheaterForAdmin(THEATER_ID);
+
+        assertAll(
+                () -> assertEquals(1, result.size()),
+                () -> assertNotNull(result.get(0).getAlert())
+        );
+    }
+
+    @Test
+    void testFindAllShowtimesByTheaterForAdminInactiveShowtime() {
+        // Función inactiva → incluida en la lista pero sin alerta
+        Showtime showtime = buildShowtime(
+                LocalDate.now().plusDays(1), LocalTime.of(14, 0), LocalTime.of(16, 0));
+        showtime.setActive(false);
+
+        when(showtimeRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(showtime));
+
+        List<ShowtimeByTheaterResponse> result = showtimeService.findAllShowtimesByTheaterForAdmin(THEATER_ID);
+
+        assertAll(
+                () -> assertEquals(1, result.size()),
+                () -> assertNull(result.get(0).getAlert())
+        );
+    }
+
+    @Test
+    void testFindAllShowtimesByTheaterForAdminPastShowtime() {
+        // Función activa pero ya pasó → incluida, sin alerta, sin desactivar
+        Showtime past = buildShowtime(
+                LocalDate.now().minusDays(1), LocalTime.of(10, 0), LocalTime.of(12, 0));
+
+        when(showtimeRepository.findByTheater_Id(THEATER_ID)).thenReturn(List.of(past));
+
+        List<ShowtimeByTheaterResponse> result = showtimeService.findAllShowtimesByTheaterForAdmin(THEATER_ID);
+
+        assertAll(
+                () -> assertEquals(1, result.size()),
+                () -> assertNull(result.get(0).getAlert()),
+                () -> verify(showtimeRepository, never()).save(past)   // admin view no desactiva
+        );
+    }
+
     private Showtime buildShowtime(LocalDate date, LocalTime start, LocalTime end) {
         Showtime s = new Showtime();
         s.setId(SHOWTIME_ID);

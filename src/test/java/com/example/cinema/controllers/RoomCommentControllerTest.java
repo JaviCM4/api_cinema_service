@@ -2,6 +2,7 @@ package com.example.cinema.controllers;
 
 import com.example.cinema.config.SecurityConfig;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.dtos.room.response.UserTheaterCommentResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
@@ -17,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,6 +50,7 @@ class RoomCommentControllerTest {
     // ── GET /v1/theaters/{theaterId}/comments ─────────────────────────────────
 
     @Test
+    @WithMockUser
     void getComments_ReturnsList() throws Exception {
         CommentResponse comment = new CommentResponse(
                 COMMENT_ID, USER_ID, "Usuario Test", "Excelente sonido e imagen.", LocalDateTime.now(), false);
@@ -59,6 +63,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getComments_TheaterNotFound() throws Exception {
         when(commentService.findCommentsByTheater(THEATER_ID))
                 .thenThrow(new ResourceNotFoundException("Sala no encontrada"));
@@ -68,6 +73,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getComments_EmptyList() throws Exception {
         when(commentService.findCommentsByTheater(THEATER_ID)).thenReturn(List.of());
 
@@ -79,6 +85,7 @@ class RoomCommentControllerTest {
     // ── POST /v1/theaters/{theaterId}/comments ────────────────────────────────
 
     @Test
+    @WithMockUser
     void createComment_Created() throws Exception {
         String body = """
                 {
@@ -96,6 +103,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createComment_TheaterNotFound() throws Exception {
         String body = """
                 {
@@ -114,6 +122,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createComment_CommentsRestricted_Forbidden() throws Exception {
         String body = """
                 {
@@ -132,6 +141,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createComment_MissingRequiredFields_BadRequest() throws Exception {
         mockMvc.perform(post("/v1/theaters/{theaterId}/comments", THEATER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,6 +152,7 @@ class RoomCommentControllerTest {
     // ── PATCH /v1/comments/{commentId} ────────────────────────────────────────
 
     @Test
+    @WithMockUser
     void updateComment_NoContent() throws Exception {
         String body = """
                 {
@@ -159,6 +170,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateComment_NotFound() throws Exception {
         String body = """
                 {
@@ -177,6 +189,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateComment_NotOwner_Conflict() throws Exception {
         String body = """
                 {
@@ -197,6 +210,7 @@ class RoomCommentControllerTest {
     // ── DELETE /v1/comments/{commentId}?userId=... ────────────────────────────
 
     @Test
+    @WithMockUser
     void deleteComment_NoContent() throws Exception {
         doNothing().when(commentService).deleteComment(eq(COMMENT_ID), eq(USER_ID));
 
@@ -206,6 +220,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deleteComment_NotFound() throws Exception {
         doThrow(new ResourceNotFoundException("Comentario no encontrado"))
                 .when(commentService).deleteComment(eq(COMMENT_ID), eq(USER_ID));
@@ -216,6 +231,7 @@ class RoomCommentControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deleteComment_NotOwner_Conflict() throws Exception {
         doThrow(new ConflictException("No puedes eliminar el comentario de otro usuario"))
                 .when(commentService).deleteComment(eq(COMMENT_ID), eq(USER_ID));
@@ -223,5 +239,32 @@ class RoomCommentControllerTest {
         mockMvc.perform(delete("/v1/comments/{commentId}", COMMENT_ID)
                         .param("userId", USER_ID.toString()))
                 .andExpect(status().isConflict());
+    }
+
+    // ── GET /v1/comments/user/{userId} ────────────────────────────────────────
+
+    @Test
+    @WithMockUser
+    void getCommentsByUser_ReturnsList() throws Exception {
+        UserTheaterCommentResponse response = new UserTheaterCommentResponse(
+                COMMENT_ID, "Buen sonido", LocalDateTime.now(), false,
+                THEATER_ID, "Sala 2D", UUID.randomUUID(), "Cinepolis Centro",
+                "Av. Principal 1", UUID.randomUUID(), "Cinepolis");
+        when(commentService.findCommentsByUser(USER_ID)).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/v1/comments/user/{userId}", USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].content").value("Buen sonido"))
+                .andExpect(jsonPath("$[0].theaterName").value("Sala 2D"));
+    }
+
+    @Test
+    @WithMockUser
+    void getCommentsByUser_EmptyList() throws Exception {
+        when(commentService.findCommentsByUser(USER_ID)).thenReturn(List.of());
+
+        mockMvc.perform(get("/v1/comments/user/{userId}", USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
     }
 }

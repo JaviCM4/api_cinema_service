@@ -34,6 +34,8 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, UUID> {
 
     List<Showtime> findByMovieIdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(UUID movieId);
 
+    List<Showtime> findByTheater_Cinema_IdAndIsActiveTrueOrderByDateShowtimeAscStartShowtimeAsc(UUID cinemaId);
+
     boolean existsByTheater_IdAndMovieIdAndDateShowtimeAndStartShowtime(
             UUID theaterId, UUID movieId, LocalDate date, LocalTime startTime);
 

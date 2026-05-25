@@ -62,4 +62,10 @@ public class TheaterController {
     public ResponseEntity<List<TheaterClientResponse>> findTheatersByMovie(@RequestParam UUID movieId) {
         return ResponseEntity.ok(theaterService.findTheatersByMovie(movieId));
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/cinema/{cinemaId}")
+    public ResponseEntity<List<TheaterClientResponse>> findTheatersWithShowtimesByCinema(@PathVariable UUID cinemaId) {
+        return ResponseEntity.ok(theaterService.findTheatersWithShowtimesByCinema(cinemaId));
+    }
 }

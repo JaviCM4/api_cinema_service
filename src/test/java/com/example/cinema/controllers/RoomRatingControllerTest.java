@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.config.SecurityConfig;
 import com.example.cinema.dtos.room.response.RatingResponse;
 import com.example.cinema.dtos.room.response.RatingSummaryResponse;
+import com.example.cinema.dtos.room.response.UserTheaterRatingResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
@@ -18,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,6 +48,7 @@ class RoomRatingControllerTest {
     private static final UUID USER_ID    = UUID.fromString("dddddddd-0000-0000-0000-000000000001");
 
     @Test
+    @WithMockUser
     void getRatings_ReturnsSummary() throws Exception {
         RatingResponse ratingResponse = new RatingResponse(RATING_ID, USER_ID, (short) 5, LocalDateTime.now());
         RatingSummaryResponse summary = new RatingSummaryResponse(List.of(ratingResponse), 5.0);
@@ -57,6 +61,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getRatings_TheaterNotFound() throws Exception {
         when(ratingService.findRatingsByTheater(THEATER_ID))
                 .thenThrow(new ResourceNotFoundException("Sala no encontrada"));
@@ -66,6 +71,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getRatings_EmptySummary() throws Exception {
         RatingSummaryResponse summary = new RatingSummaryResponse(List.of(), null);
         when(ratingService.findRatingsByTheater(THEATER_ID)).thenReturn(summary);
@@ -76,6 +82,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createRating_Created() throws Exception {
         String body = """
                 {
@@ -93,6 +100,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createRating_TheaterNotFound() throws Exception {
         String body = """
                 {
@@ -111,6 +119,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createRating_RatingsRestricted_Forbidden() throws Exception {
         String body = """
                 {
@@ -129,6 +138,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createRating_AlreadyRated_Conflict() throws Exception {
         String body = """
                 {
@@ -147,6 +157,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createRating_ScoreOutOfRange_BadRequest() throws Exception {
         String body = """
                 {
@@ -162,6 +173,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createRating_MissingRequiredFields_BadRequest() throws Exception {
         mockMvc.perform(post("/v1/theaters/{theaterId}/ratings", THEATER_ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -170,6 +182,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateRating_NoContent() throws Exception {
         String body = """
                 {
@@ -187,6 +200,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateRating_NotFound() throws Exception {
         String body = """
                 {
@@ -205,6 +219,7 @@ class RoomRatingControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateRating_NotOwner_Conflict() throws Exception {
         String body = """
                 {
@@ -220,5 +235,32 @@ class RoomRatingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isConflict());
+    }
+
+    // ── GET /v1/ratings/user/{userId} ────────────────────────────────────────
+
+    @Test
+    @WithMockUser
+    void getRatingsByUser_ReturnsList() throws Exception {
+        UserTheaterRatingResponse response = new UserTheaterRatingResponse(
+                RATING_ID, (short) 5, LocalDateTime.now(),
+                THEATER_ID, "Sala IMAX", UUID.randomUUID(), "Cinepolis Sur",
+                "Av. Sur 10", UUID.randomUUID(), "Cinepolis");
+        when(ratingService.findRatingsByUser(USER_ID)).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/v1/ratings/user/{userId}", USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].score").value(5))
+                .andExpect(jsonPath("$[0].theaterName").value("Sala IMAX"));
+    }
+
+    @Test
+    @WithMockUser
+    void getRatingsByUser_EmptyList() throws Exception {
+        when(ratingService.findRatingsByUser(USER_ID)).thenReturn(List.of());
+
+        mockMvc.perform(get("/v1/ratings/user/{userId}", USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
     }
 }
