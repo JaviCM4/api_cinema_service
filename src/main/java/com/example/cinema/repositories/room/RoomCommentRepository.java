@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface RoomCommentRepository extends JpaRepository<RoomComment, UUID> {
 
     List<RoomComment> findByTheater_IdOrderByCreatedAtDesc(UUID theaterId);
+
+    List<RoomComment> findByUserIdOrderByCreatedAtDesc(UUID userId);
 }

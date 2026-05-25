@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.dtos.room.response.UserTheaterCommentResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
@@ -56,5 +57,11 @@ public class RoomCommentController {
             throws ResourceNotFoundException, ConflictException {
         commentService.deleteComment(commentId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/v1/comments/user/{userId}")
+    public ResponseEntity<List<UserTheaterCommentResponse>> getCommentsByUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(commentService.findCommentsByUser(userId));
     }
 }

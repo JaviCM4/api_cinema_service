@@ -3,6 +3,7 @@ package com.example.cinema.controllers;
 import com.example.cinema.dtos.room.request.CreateRatingRequest;
 import com.example.cinema.dtos.room.request.UpdateRatingRequest;
 import com.example.cinema.dtos.room.response.RatingSummaryResponse;
+import com.example.cinema.dtos.room.response.UserTheaterRatingResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -47,5 +49,11 @@ public class RoomRatingController {
             throws ResourceNotFoundException, ConflictException {
         ratingService.updateRating(ratingId, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/v1/ratings/user/{userId}")
+    public ResponseEntity<List<UserTheaterRatingResponse>> getRatingsByUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(ratingService.findRatingsByUser(userId));
     }
 }

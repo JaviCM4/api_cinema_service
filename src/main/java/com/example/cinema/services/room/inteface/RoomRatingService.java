@@ -3,10 +3,12 @@ package com.example.cinema.services.room.inteface;
 import com.example.cinema.dtos.room.request.CreateRatingRequest;
 import com.example.cinema.dtos.room.request.UpdateRatingRequest;
 import com.example.cinema.dtos.room.response.RatingSummaryResponse;
+import com.example.cinema.dtos.room.response.UserTheaterRatingResponse;
 import com.example.cinema.exceptions.ConflictException;
 import com.example.cinema.exceptions.ResourceNotFoundException;
 import com.example.cinema.exceptions.RestrictedException;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface RoomRatingService {
@@ -18,4 +20,6 @@ public interface RoomRatingService {
             throws ResourceNotFoundException, ConflictException;
 
     RatingSummaryResponse findRatingsByTheater(UUID theaterId) throws ResourceNotFoundException;
+
+    List<UserTheaterRatingResponse> findRatingsByUser(UUID userId);
 }

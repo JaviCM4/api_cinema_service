@@ -5,6 +5,7 @@ import com.example.cinema.client.users.UserClient;
 import com.example.cinema.dtos.room.request.CreateCommentRequest;
 import com.example.cinema.dtos.room.request.UpdateCommentRequest;
 import com.example.cinema.dtos.room.response.CommentResponse;
+import com.example.cinema.dtos.room.response.UserTheaterCommentResponse;
 import com.example.cinema.events.comments.RoomCommentCreatedEvent;
 import com.example.cinema.events.comments.RoomCommentDeleteEvent;
 import com.example.cinema.events.comments.RoomCommentUpdateEvent;
@@ -115,6 +116,15 @@ public class RoomCommentServiceImplementation implements RoomCommentService {
         return commentRepository.findByTheater_IdOrderByCreatedAtDesc(theaterId)
                 .stream()
                 .map(comment -> CommentResponse.from(comment, userClient.getUserName(comment.getUserId())))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserTheaterCommentResponse> findCommentsByUser(UUID userId) {
+        return commentRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(UserTheaterCommentResponse::from)
                 .toList();
     }
 }

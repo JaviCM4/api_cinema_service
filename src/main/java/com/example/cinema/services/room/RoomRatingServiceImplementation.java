@@ -5,6 +5,7 @@ import com.example.cinema.dtos.room.request.CreateRatingRequest;
 import com.example.cinema.dtos.room.request.UpdateRatingRequest;
 import com.example.cinema.dtos.room.response.RatingResponse;
 import com.example.cinema.dtos.room.response.RatingSummaryResponse;
+import com.example.cinema.dtos.room.response.UserTheaterRatingResponse;
 import com.example.cinema.events.ratings.RoomRatingCreatedEvent;
 import com.example.cinema.events.ratings.RoomRatingUpdatedEvent;
 import com.example.cinema.exceptions.ConflictException;
@@ -103,5 +104,14 @@ public class RoomRatingServiceImplementation implements RoomRatingService {
                 .toList();
         Double average = ratingRepository.findAverageScoreByTheater_Id(theaterId);
         return new RatingSummaryResponse(ratings, average);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserTheaterRatingResponse> findRatingsByUser(UUID userId) {
+        return ratingRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(UserTheaterRatingResponse::from)
+                .toList();
     }
 }

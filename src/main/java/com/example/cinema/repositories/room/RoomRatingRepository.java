@@ -18,4 +18,6 @@ public interface RoomRatingRepository extends JpaRepository<RoomRating, UUID> {
 
     @Query("SELECT AVG(r.score) FROM RoomRating r WHERE r.theater.id = :theaterId")
     Double findAverageScoreByTheater_Id(UUID theaterId);
+
+    List<RoomRating> findByUserIdOrderByCreatedAtDesc(UUID userId);
 }
